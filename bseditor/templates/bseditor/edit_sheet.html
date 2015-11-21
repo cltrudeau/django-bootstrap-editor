@@ -1,0 +1,232 @@
+{% extends "bseditor/base.html" %}
+{% load awltags %}
+{% block title %}Edit CSS{% endblock title %}
+ 
+{% block extra_head %}
+<style>
+body {
+  padding-top:80px;
+}
+</style>
+{% endblock extra_head %}
+
+{% block nav %}
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed"
+          data-toggle="collapse" data-target="#navbar"
+          aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle Navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div id="navbar" class="collapse navbar-collapse">
+      <div class="row">
+        <div class="col-sm-10 col-sm-offset-1">
+          <form class="navbar-form">
+            <div class="form-group">
+              <label for="name" class="control-label">Sheet Name:</label>
+              <input id="name" type="text" class="form-control"
+                value="{{sheet.name}}"/>
+            </div>
+            <div class="form-group pull-right">
+              <button id="save" class="btn btn-sm btn-primary">Save</button>
+              <button id="cancel" class="btn btn-sm btn-default">Cancel</button>
+              <button id="preview" class="btn btn-sm btn-success">
+                Preview</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock nav %}
+
+{% block contents %}
+<div class="row">
+  <div class="col-sm-10 col-sm-offset-1">
+    <div id="accordian" class="panel-group" role="tablist" 
+        aria-multiselectable="true">
+      {% for section in sass_base.sections.values %}
+        <div class="section-panel panel panel-default">
+          <div id="heading-{{section.slug}}" class="panel-heading" role="tab">
+            <h3 class="panel-title">
+              <a role="button" data-toggle="collapse" data-parent="#accordian"
+                  href="#collapse-{{section.slug}}" aria-expanded="false"
+                  class="collapser collapsed" 
+                  aria-controls="collapse-{{section.slug}}">
+                {{section.name}}
+              </a>
+              <span class="has-edits glyphicon glyphicon-pencil"></span>
+            </h3>
+            {% if section.info %}
+              <h5 class="text-muted">{{section.info}}</h5>
+            {% endif %}
+          </div>
+          <div id="collapse-{{section.slug}}" role="tabpanel"
+              class="panel-collapse collapse" 
+              aria-labelledby="heading-{{section.slug}}">
+            <div class="panel-body">
+              {% for comp in section.components.values %}
+                <form class="form-horizontal" role="form" autocomplete="off">
+                  <div class="form-group">
+                    <label for="comp-{{comp.slug}}" 
+                        class="col-sm-2 control-label">
+                      {{comp.name}}
+                    </label>
+                    <div class="col-sm-7">
+                      <div class="input-group">
+                        {% accessor comp 'name' as comp_name %}
+                        <input id="comp-{{comp.slug}}" type="text" 
+                          placeholder="{{comp.value}}" 
+                          {% if sass_custom.all_components|getitem:comp.name %}
+        value="{% accessor sass_custom 'all_components' [comp_name] 'value' %}"
+                          {% endif %}
+  class="var-edit form-control{%if comp.colour_value%} colour-value{%endif%}"/>
+                        <div class="input-group-addon">
+                          <a href="javascript:void(0)" class="copy-default"
+                              title="set to default">
+                            <span class="glyphicon glyphicon-tag"></span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-1 text-center">
+                      {% if comp.colour_value %}
+                        <span class="form-control colour-swatch" 
+                          style="background-color:{{comp.colour_value}};">
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </form>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock contents %}
+
+{% block script %}
+<script type="text/javascript">
+// -------------------------------------------------------------
+// Main
+// -------------------------------------------------------------
+
+// --- Globals
+var sheet_data = {
+  version:{{sheet.version.id}},
+  overrides:{},
+};
+
+// --- Methods
+function section_has_edits(section) {
+  var has_edits = false;
+  section.find('.var-edit').each(function() {
+    if( $(this).val().length != 0 ) {
+      has_edits = true;
+      return false;    // escape the each()
+    }
+  });
+
+  if( has_edits ) {
+    section.find('.has-edits').show();
+  }
+  else {
+    section.find('.has-edits').hide();
+  }
+}
+
+
+function colour_id(field) {
+    var id = field.attr('id');
+    return id.substr(5);
+}
+
+
+function update_sheet_data(field) {
+    var value = field.val();
+    var id = colour_id(field);
+    if( value.length > 0 ) {
+      sheet_data['overrides'][id] = value;
+    }
+    else {
+      delete sheet_data['overrides'][id];
+    }
+}
+
+
+function ajax_update_colour(field) {
+  var payload = $.extend({}, sheet_data);
+  var id = colour_id(field);
+  payload['sass_variable'] = id;
+
+  // set the swatch to loading
+  var swatch = field.closest('form').find('.colour-swatch');
+  swatch.html('<span class="glyphicon glyphicon-hourglass"></span>');
+  swatch.css('background-color', '#fff');
+
+  $.ajax({
+    type:'POST',
+    url:'{{ajax_colour_value_url}}',
+    data:{'payload':JSON.stringify(payload)},
+    success:function(response) {
+      if( response['success'] ) {
+        swatch.html('');
+        swatch.css('background-color', response['colour']);
+      }
+      else {
+        swatch.css('color', 'red');
+        swatch.html('<span class="glyphicon glyphicon-remove"></span>');
+      }
+    },
+    error:function() {
+        swatch.css('color', 'red');
+        swatch.html('<span class="glyphicon glyphicon-remove"></span>');
+    },
+  });
+}
+
+// --- On Startup
+$(function() {
+  // Populate Data
+  $('.var-edit').each(function() {
+    update_sheet_data($(this));
+  });
+
+  $('.section-panel').each(function() {
+    section_has_edits($(this));
+  });
+
+  // Event Handers
+  $('.var-edit').on('input propertychange paste', function() {
+    // input has changed, update our section header
+    update_sheet_data($(this));
+    section_has_edits($(this).closest('.section-panel'));
+  });
+
+  $('.var-edit.colour-value').on('change', function() {
+    ajax_update_colour($(this));
+  });
+
+  $('#cancel').click(function() {
+    window.location.assign('{{cancel_url}}');
+    return false;
+  });
+
+  $('.copy-default').click(function() {
+    var input = $(this).parent().parent().children('input');
+    input.val(input.attr('placeholder'));
+    section_has_edits($(this).closest('.section-panel'));
+  });
+});
+</script>
+{% endblock script %}
