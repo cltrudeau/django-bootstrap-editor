@@ -1,0 +1,36 @@
+body {
+    padding-top:80px;
+}
+
+.colboundary {
+    border-right: 1px solid #9B8888;
+}
+
+.colstripe1 {
+    background-color:lightsteelblue;
+}
+
+.colstripe2 {
+    background-color:whitesmoke;
+}
+
+.button-p {
+    margin-top:15px;
+    margin-bottom:15px;
+}
+
+.text-indent {
+    padding-left:15px;
+}
+
+.text-examples hr {
+    margin-top:7px;
+    margin-bottom:7px;
+}
+
+.with-line {
+    border-left: 1px dotted black;
+    border-right: 1px dotted black;
+    width:100%;
+    display:block;
+}

@@ -5,6 +5,9 @@ urlpatterns = patterns('bseditor.views',
         name='bseditor-show-version-variables'),
     url(r'create_sheet/(\d+)/$', 'create_sheet', name='bseditor-create-sheet'),
     url(r'edit_sheet/(\d+)/$', 'edit_sheet', name='bseditor-edit-sheet'),
+    url(r'preview_sheet/(\d+)/$', 'preview_sheet', 
+        name='bseditor-preview-sheet'),
+
     url(r'ajax_colour_value/$', 'ajax_colour_value',
         name='bseditor-ajax-colour-value'),
 )

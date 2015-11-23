@@ -102,3 +102,16 @@ def ajax_colour_value(request):
         pass
 
     return JsonResponse(data)
+
+
+@staff_member_required
+def preview_sheet(request, sheet_id):
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+
+    data = {
+        'sheet':sheet,
+        'sass_base':sheet.version.sass_variables,
+        'sass_custom':sheet.sass_variables,
+    }
+
+    return render_page(request, 'bseditor/preview_sheet.html', data)

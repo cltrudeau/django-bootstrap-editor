@@ -1,0 +1,765 @@
+{% extends "bseditor/base.html" %}
+{% load staticfiles %}
+{% block title %}Preview: {{sheet.name}}{% endblock title %}
+ 
+{% block extra_head %}
+<link rel="stylesheet" type="text/css"
+  href="{% static 'bseditor/css/preview.css' %}"/>
+{% endblock extra_head %}
+
+{% block nav %}
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed"
+          data-toggle="collapse" data-target="#navbar"
+          aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle Navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Brand</a>
+    </div>
+    <div id="navbar" class="collapse navbar-collapse">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Link</a></li>
+        <li><a href="#">Link</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+              role="button" aria-haspopup="true" aria-expanded="false">
+            Dropdown <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Action</a></li>
+            <li class="disabled"><a href="#">Disabled Action</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="#">Separated Link</a></li>
+          </ul>
+        </li>
+      </ul>
+      <form class="navbar-form navbar-left" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+      <ul class="nav navbar-nav navbar-right">
+        <li class="active"><a href="#">RHS Link</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock nav %}
+
+{% block contents %}
+<div class="row">
+  <div class="col-sm-1 text-center colstripe1 colboundary"> 
+    <span class="with-line">1</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe2 colboundary"> 
+    <span class="with-line">2</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe1 colboundary"> 
+    <span class="with-line">3</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe2 colboundary"> 
+    <span class="with-line">4</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe1 colboundary"> 
+    <span class="with-line">5</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe2 colboundary"> 
+    <span class="with-line">6</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe1 colboundary"> 
+    <span class="with-line">7</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe2 colboundary"> 
+    <span class="with-line">8</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe1 colboundary"> 
+    <span class="with-line">9</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe2 colboundary"> 
+    <span class="with-line">10</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe1 colboundary"> 
+    <span class="with-line">11</span>
+  </div>
+  <div class="col-sm-1 text-center colstripe2"> 
+    <span class="with-line">12</span>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h1>H1 - Heading 1 <small>(&lt;Small Text&gt;)</small></h1>
+    <h2>H2 - Heading 2 <small>(&lt;Small Text&gt;)</small></h2>
+    <h3>H3 - Heading 3 <small>(&lt;Small Text&gt;)</small></h3>
+    <h4>H4 - Heading 4 <small>(&lt;Small Text&gt;)</small></h4>
+    <h5>H5 - Heading 5 <small>(&lt;Small Text&gt;)</small></h5>
+    <h6>H6 - Heading 6 <small>(&lt;Small Text&gt;)</small></h6>
+    <hr/>
+    <h3>Buttons</h3>
+    <p class="button-p">
+      <button class="btn btn-default">Default</button>
+      <button class="btn btn-primary">Primary</button>
+      <button class="btn btn-success">Success</button>
+      <button class="btn btn-info">Info</button>
+      <button class="btn btn-warning">Warning</button>
+      <button class="btn btn-danger">Danger</button>
+    </p>
+    <p class="button-p">
+      <button class="btn btn-primary btn-xs">Extra Small</button>
+      <button class="btn btn-primary btn-sm">Small</button>
+      <button class="btn btn-primary ">Default</button>
+      <button class="btn btn-primary btn-lg">Large</button>
+      <button class="btn btn-primary ">With a Badge
+        <span class="badge">42</span>
+      </button>
+    </p>
+  </div>
+  <div class="col-sm-6">
+    <h3>Labels</h3>
+    <p class="button-p">
+      <span class="label label-default">Default</span>
+      <span class="label label-primary">Primary</span>
+      <span class="label label-success">Success</span>
+      <span class="label label-info">Info</span>
+      <span class="label label-warning">Warning</span>
+      <span class="label label-danger">Danger</span>
+    </p>
+    <hr/>
+    <h3>Lists</h3>
+    <div class="row">
+      <div class="col-sm-6">
+        <ul>
+          <li> Unordered List </li> 
+          <li> Item </li>
+          <ul>
+            <li> Nested </li>
+            <li> Nested </li>
+            <ul>
+              <li> 2nd Nested </li>
+              <li> 2nd Nested </li>
+            </ul>
+            <li> Nested </li>
+            <li> Nested </li>
+          </ul>
+          <li> Item </li>
+          <li> Item </li>
+        </ul>
+      </div>
+      <div class="col-sm-6">
+        <ol>
+          <li> Unordered List </li> 
+          <li> Item </li>
+          <ol>
+            <li> Nested </li>
+            <li> Nested </li>
+            <ol>
+              <li> 2nd Nested </li>
+              <li> 2nd Nested </li>
+            </ol>
+            <li> Nested </li>
+            <li> Nested </li>
+          </ol>
+          <li> Item </li>
+          <li> Item </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+<hr/>
+
+<div class="row text-examples">
+  <div class="col-sm-6">
+    <p>
+      Normal Text 
+      &ndash; <strong>this is strong</strong> &ndash; <em>this is italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+    <hr/>
+    <p class="text-primary">
+      Primary Text
+      &ndash; <strong>in strong</strong> &ndash; <em>in italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+    
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+    <hr/>
+    <p class="text-success">
+      Success Text
+      &ndash; <strong>in strong</strong> &ndash; <em>in italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+    
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+    <hr/>
+    <p class="text-info">
+      Info Text
+      &ndash; <strong>in strong</strong> &ndash; <em>in italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+    
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+  </div>
+  <div class="col-sm-6">
+    <p class="text-warning">
+      Warning Text
+      &ndash; <strong>in strong</strong> &ndash; <em>in italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+    
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+    <hr/>
+    <p class="text-danger">
+      Danger Text
+      &ndash; <strong>in strong</strong> &ndash; <em>in italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+    
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+    <hr/>
+    <p class="text-muted">
+      Muted Text
+      &ndash; <strong>in strong</strong> &ndash; <em>in italics</em> 
+      &ndash; <mark>this is highlight</mark> 
+      &ndash; <s>this is strikethrough</s> &ndash; <del>this is delete</del> 
+      &ndash; <ins>this is this inserted</ins> 
+      &ndash; <u>this is underlined</u> 
+      &ndash; <small>this is small</small>
+      <br/>
+      <br/>
+    
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+      tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+      commodo consequat. 
+    </p>
+  </div>
+</div>
+<hr/>
+<div class="row">
+  <div class="col-sm-6">
+    <pre>
+def sample_code(a, b):
+  while(True):
+    print('This is some sample code')
+
+  raise NeverGotHere()
+</pre>
+  </div>
+  <div class="col-sm-6">
+    Inline text tags: <code>code text</code>, <kbd>user input</kbd>, 
+    <var>variables x + y</var>, <samp>sample output text</samp>.
+
+    <br/>
+    <br/>
+
+    <blockquote>
+      <p>This is a block quote.  Pretend it says something witty said by
+      someone famous.  </p>
+      <footer>Someone famous, <cite>A Title</cite></footer>
+    </blockquote>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>Bordered, Striped Table</h3>
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>First</th>
+          <th>Last</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Charles</td>
+          <td>Vane</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Jack</td>
+          <td>Rackham</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Anne</td>
+          <td>Bonny</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Edward</td>
+          <td>Teach</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Francis</td>
+          <td>Drake</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+  <div class="col-sm-6">
+    <h3>Condensed Table, Contextual Rows</h3>
+
+    <table class="table table-condensed">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>First</th>
+          <th>Last</th>
+          <th>Column Class</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Thomas</td>
+          <td>Barrow</td>
+          <td>None</td>
+        </tr>
+        <tr class="active">
+          <td>2</td>
+          <td>Benajmin</td>
+          <td>Hornigold</td>
+          <td>Active</td>
+        </tr>
+        <tr class="success">
+          <td>3</td>
+          <td>Mary</td>
+          <td>Read</td>
+          <td>Success</td>
+        </tr>
+        <tr class="info">
+          <td>4</td>
+          <td>Stede</td>
+          <td>Bonnet</td>
+          <td>Info</td>
+        </tr>
+        <tr class="warning">
+          <td>5</td>
+          <td>William</td>
+          <td>Kidd</td>
+          <td>Warning</td>
+        </tr>
+        <tr class="danger">
+          <td>6</td>
+          <td>Bartholomew</td>
+          <td>Roberts</td>
+          <td>Danger</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<hr/>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>Basic Form</h3>
+    <form>
+      <div class="form-group">
+        <label for="email1">Email Address</label>
+        <input type="email" class="form-control" id="email1"
+            placeholder="Email">
+      </div>
+      <div class="form-group">
+        <label for="password1">Password</label>
+        <input type="password" class="form-control" id="password1"
+            placeholder="Email">
+      </div>
+      <div class="form-group">
+        <label for="file1">File</label>
+        <input type="file1" id="file1">
+        <p class="help-block">Help-block text area</p>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" value=""> First Option
+        </label>
+      </div>
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" value=""> Second Option
+        </label>
+      </div>
+      <div class="radio">
+        <label>
+          <input type="radio" name="stations" id="radio1" value="radio1" 
+            checked>
+          FM 99.1
+        </label>
+      </div>
+      <div class="radio">
+        <label>
+          <input type="radio" name="stations" id="radio2" value="radio2" >
+          Q107
+        </label>
+      </div>
+      <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+  </div>
+  <div class="col-sm-6">
+    <h3>Inline Form</h3>
+    <form class="form-inline">
+      <div class="form-group">
+        <label for="amount1" class="control-label">Amount</label>
+        <div class="input-group">
+          <div class="input-group-addon">$</div>
+          <input type="text" class="form-control" id="amount1"
+              placeholder="Amount">
+          <div class="input-group-addon">.00</div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+
+    <h3>Horizontal Form</h3>
+    <form class="form-horizontal">
+      <div class="form-group">
+        <label for="email1" class="col-sm-3 control-label">Email Address</label>
+        <div class="col-sm-9">
+          <input type="email" class="form-control" id="email1"
+              placeholder="Email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="comments" class="col-sm-3 control-label">Comments</label>
+        <div class="col-sm-9">
+          <textarea class="form-control" id="comments" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="car" class="col-sm-3 control-label">Car</label>
+        <div class="col-sm-9">
+          <select id="car" class="form-control">
+            <option>Audi</option>
+            <option>BMW</option>
+            <option>Lexus</option>
+            <option>VW</option>
+          </select>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>
+<hr/>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>Pill Nav</h3>
+    <ul class="nav nav-pills">
+      <li role="presentation" class="active"><a href="#">Active</a></li>
+      <li role="presentation"><a href="#">Other</a></li>
+      <li role="presentation"><a href="#">Thing</a></li>
+    </ul>
+  </div>
+  <div class="col-sm-6">
+    <h3>Breadcrumbs</h3>
+    <ol class="breadcrumb">
+      <li ><a href="#">Active</a></li>
+      <li ><a href="#">Other</a></li>
+      <li class="active">Thing</li>
+    </ol>
+  </div>
+</div>
+<hr/>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>Pagination</h3>
+    <ul class="pagination">
+      <li class="disabled">
+        <a href="#" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      <li class="active"><a href="#">1</a></li>
+      <li><a href="#">2</a></li>
+      <li><a href="#">3</a></li>
+      <li><a href="#">4</a></li>
+      <li><a href="#">5</a></li>
+      <li>
+        <a href="#" aria-label="Previous">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+  <div class="col-sm-6">
+    <h3>Breadcrumbs</h3>
+    <ol class="breadcrumb">
+      <li ><a href="#">Active</a></li>
+      <li ><a href="#">Other</a></li>
+      <li class="active">Thing</li>
+    </ol>
+  </div>
+</div>
+<hr/>
+
+<div class="jumbotron">
+  <h1>Jumbotron!</h1>
+  <p>When you absolutely, positively must get the attention of everyone in the
+  room!
+  </p>
+</div>
+<hr/>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>Alerts</h3>
+    <div class="alert alert-success" role="alert">
+      Success Alert!
+    </div>
+    <div class="alert alert-info" role="alert">
+      Info Alert!
+    </div>
+    <div class="alert alert-warning" role="alert">
+      Warning Alert!
+    </div>
+    <div class="alert alert-danger" role="alert">
+      Danger Alert!
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <h3>Progress Bars</h3>
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" aria-valuenow="60" 
+              aria-valuemin="0" aria-valuemax="100" style="width:60%;">
+            Default @ 60%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar progress-bar-success" role="progressbar" 
+              aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" 
+              style="width:60%;">
+            Success @ 60%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar progress-bar-info" role="progressbar" 
+              aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" 
+              style="width:60%;">
+            Info @ 60%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar progress-bar-warning" role="progressbar" 
+              aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" 
+              style="width:60%;">
+            Warning @ 60%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar progress-bar-danger" role="progressbar" 
+              aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" 
+              style="width:60%;">
+            Danger @ 60%
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="progress">
+          <div class="progress-bar progress-bar-striped" role="progressbar" 
+              aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" 
+              style="width:80%;">
+            Default / Striped @ 80%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar  progress-bar-success progress-bar-striped" 
+              role="progressbar" aria-valuenow="80" aria-valuemin="0" 
+              aria-valuemax="100" style="width:80%;">
+            Success / Striped @ 80%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar  progress-bar-info progress-bar-striped" 
+              role="progressbar" aria-valuenow="80" aria-valuemin="0" 
+              aria-valuemax="100" style="width:80%;">
+            Info / Striped @ 80%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar  progress-bar-warning progress-bar-striped" 
+              role="progressbar" aria-valuenow="80" aria-valuemin="0" 
+              aria-valuemax="100" style="width:80%;">
+            Warning / Striped @ 80%
+          </div>
+        </div>
+        <div class="progress">
+          <div class="progress-bar  progress-bar-danger progress-bar-striped" 
+              role="progressbar" aria-valuenow="80" aria-valuemin="0" 
+              aria-valuemax="100" style="width:80%;">
+            Danger / Striped @ 80%
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="progress">
+      <div class="progress-bar" role="progressbar" aria-valuenow="80" 
+          aria-valuemin="0" 
+          aria-valuemax="100" style="width:30%;">
+        Stacked 
+      </div>
+      <div class="progress-bar progress-bar-warning" role="progressbar" 
+          aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" 
+          style="width:20%;">
+        and 
+      </div>
+      <div class="progress-bar progress-bar-danger progress-bar-striped active"
+          role="progressbar" aria-valuenow="30" 
+          aria-valuemin="0" aria-valuemax="100" style="width:30%;">
+        Animated
+      </div>
+    </div>
+  </div>
+</div>
+<hr/>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>List Groups</h3>
+    <ul class="list-group">
+      <li class="list-group-item">
+        <span class="badge">14</span>
+        List Group Item with Badge
+      </li>
+      <li class="list-group-item">Another</li>
+      <li class="list-group-item">One More</li>
+    </ul>
+  </div>
+  <div class="col-sm-6">
+    <h3>Panels</h3>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Panel</h3>
+      </div>
+      <div class="panel-body">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+        eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
+        minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+        aliquip ex ea commodo consequat. 
+
+      </div>
+    </div>
+  </div>
+</div>
+<hr/>
+
+<div class="row">
+  <div class="col-sm-6">
+    <h3>Default Well</h3>
+    <div class="well">
+      Well, well, well!  Three holes in the ground.
+    </div>
+
+    <h3>Small Well</h3>
+    <div class="well well-sm">
+      No water yet?  Keep digging!
+    </div>
+
+  </div>
+  <div class="col-sm-6">
+    <h3>Large Well</h3>
+    <div class="well well-lg">
+      First rule of getting out of a hole: stop digging!
+    </div>
+
+  </div>
+</div>
+<hr/>
+
+{% endblock contents %}
+
+{% block postcontent %}
+<nav class="navbar navbar-inverse">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed"
+          data-toggle="collapse" data-target="#navbar2"
+          aria-expanded="false" aria-controls="navbar2">
+        <span class="sr-only">Toggle Navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Inverse Navbar</a>
+    </div>
+    <div id="navbar2" class="collapse navbar-collapse">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Link</a></li>
+        <li><a href="#">Link</a></li>
+        <li><a href="#">Link</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock postcontent %}
