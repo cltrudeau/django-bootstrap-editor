@@ -58,11 +58,7 @@ class Sheet(TimeTrackModel):
         """Returns the contents of the ``variables`` field as a SassVersion
         object.
         """
-        #sv = SassVariables.factory_from_json(self.variables)
-        sv = SassVariables.factory_from_json('{}')
-        sv.add_component('gray-base', '#333')
-
-        return sv
+        return SassVariables.factory_from_json(self.variables or '{}')
 
     @property
     def filename(self):
@@ -93,11 +89,16 @@ class Sheet(TimeTrackModel):
         import_file = os.path.abspath(os.path.join(os.path.dirname(__file__),
             'static/bseditor/sass', self.version.basefile))
 
-        src = ['@import "%s";' % import_file, ]
+        src = ['$bootstrap-sass-asset-helper:false;']
         for name, component in all_variables.all_components.items():
             src.append('$%s:%s;' % (name, component.value))
 
+        src.append('@import "%s";' % import_file)
+
         result = sass.compile(string='\n'.join(src))
+
+        with open('last_compile.txt', 'w') as f:
+            f.write('\n'.join(src))
 
         with open(self.full_filename, 'w') as f:
             f.write(result)

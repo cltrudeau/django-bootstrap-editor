@@ -63,11 +63,33 @@ def edit_sheet(request, sheet_id):
         'sheet':sheet,
         'sass_base':sheet.version.sass_variables,
         'sass_custom':sheet.sass_variables,
-        'cancel_url':reverse('admin:index'),
+        'cancel_url':reverse('admin:bseditor_sheet_changelist'),
         'ajax_colour_value_url':reverse('bseditor-ajax-colour-value'),
+        'ajax_save_sheet':reverse('bseditor-ajax-save-sheet', args=(sheet.id,)),
     }
 
     return render_page(request, 'bseditor/edit_sheet.html', data)
+
+
+@staff_member_required
+@csrf_exempt
+@post_required(['payload'])
+def ajax_save_sheet(request, sheet_id):
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+
+    payload = json.loads(request.POST['payload'])
+
+    try:
+        sheet.name = payload['name']
+        sheet.variables = json.dumps(payload['overrides'])
+        sheet.save()
+        sheet.deploy()
+        messages.success(request, 'Saved & deployed %s' % sheet.filename)
+    except Exception as e:
+        logger.exception('Error saving sheet!')
+        messages.error(request, 'Error: %s' % str(e))
+
+    return JsonResponse({})
 
 
 @staff_member_required
@@ -111,8 +133,6 @@ def preview_sheet(request, sheet_id):
 
     data = {
         'sheet':sheet,
-        'sass_base':sheet.version.sass_variables,
-        'sass_custom':sheet.sass_variables,
     }
 
     return render_page(request, 'bseditor/preview_sheet.html', data)
@@ -126,6 +146,7 @@ def deploy_sheet(request, sheet_id):
         sheet.deploy()
         messages.success(request, 'Deployed %s' % sheet.filename)
     except Exception as e:
+        logger.exception('Error in deploy!')
         messages.error(request, 'Error deploying: %s' % str(e))
 
     url = reverse('admin:bseditor_sheet_changelist')

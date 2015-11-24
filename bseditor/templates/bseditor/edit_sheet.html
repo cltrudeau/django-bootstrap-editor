@@ -241,6 +241,20 @@ $(function() {
     input.val(input.attr('placeholder'));
     section_has_edits($(this).closest('.section-panel'));
   });
+
+  $('#save').click(function() {
+    $.ajax({
+      type:'POST',
+      url:'{{ajax_save_sheet}}',
+      data:{'payload':JSON.stringify(sheet_data)},
+      complete:function() {
+        window.location.assign('{{cancel_url}}');
+        return false;
+      },
+    });
+
+    return false;
+  });
 });
 </script>
 {% endblock script %}

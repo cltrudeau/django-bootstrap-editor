@@ -32,9 +32,9 @@ mixin = make_admin_obj_mixin('Sheet')
 mixin.add_obj_link('show_version', 'version')
 
 @admin.register(Sheet)
-class SheetAmin(admin.ModelAdmin, mixin):
-    list_display = ('id', 'name', 'show_version', 'updated', 'show_filedate', 
-        'show_actions')
+class SheetAdmin(admin.ModelAdmin, mixin):
+    list_display = ('id', 'name', 'show_version', 'updated', 'filename', 
+        'show_filedate', 'show_actions')
 
     def show_actions(self, obj):
         actions = []

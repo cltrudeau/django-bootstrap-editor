@@ -11,4 +11,6 @@ urlpatterns = patterns('bseditor.views',
 
     url(r'ajax_colour_value/$', 'ajax_colour_value',
         name='bseditor-ajax-colour-value'),
+    url(r'ajax_save_sheet/(\d+)/$', 'ajax_save_sheet',
+        name='bseditor-ajax-save-sheet'),
 )
