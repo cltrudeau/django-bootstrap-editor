@@ -34,3 +34,7 @@ a:focus {
 .copy-default:active {
     color:#333;
 }
+
+#sheet-filename {
+    padding-left:7px;
+}

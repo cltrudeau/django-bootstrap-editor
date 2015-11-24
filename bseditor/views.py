@@ -2,6 +2,7 @@ import json, logging, sass
 from collections import OrderedDict
 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.utils import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -115,3 +116,17 @@ def preview_sheet(request, sheet_id):
     }
 
     return render_page(request, 'bseditor/preview_sheet.html', data)
+
+
+@staff_member_required
+def deploy_sheet(request, sheet_id):
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+
+    try:
+        sheet.deploy()
+        messages.success(request, 'Deployed %s' % sheet.filename)
+    except Exception as e:
+        messages.error(request, 'Error deploying: %s' % str(e))
+
+    url = reverse('admin:bseditor_sheet_changelist')
+    return HttpResponseRedirect(url)

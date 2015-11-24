@@ -10,9 +10,10 @@ from django.core.management.base import BaseCommand
 from bseditor.conv import SassVariables
 from bseditor.models import Version
 
-versions = [
-    ('3.3.5', 'bseditor/sass/bootstrap-3.3.5/bootstrap/_variables.scss'),
-]
+versions = (
+    ('3.3.5', 'bseditor/sass/bootstrap-3.3.5/bootstrap/_variables.scss',
+         'bootstrap-3.3.5/custom.sass', ),
+)
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -24,6 +25,6 @@ class Command(BaseCommand):
                 'static', version[1]))
 
             sass_values = SassVariables.factory_from_sass_file(filename)
-            Version.objects.create(name=version[0], 
+            Version.objects.create(name=version[0], basefile=version[2],
                 variables=sass_values.to_json())
             print('Created Version=%s' % version[0])
