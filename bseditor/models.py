@@ -58,7 +58,9 @@ class Sheet(TimeTrackModel):
         """Returns the contents of the ``variables`` field as a SassVersion
         object.
         """
-        return SassVariables.factory_from_json(self.variables or '{}')
+        overrides = json.loads(self.variables, object_pairs_hook=OrderedDict)
+        sv = SassVariables.factory_from_dict({}, overrides)
+        return sv
 
     @property
     def filename(self):

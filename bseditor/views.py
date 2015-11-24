@@ -68,6 +68,8 @@ def edit_sheet(request, sheet_id):
         'ajax_save_sheet':reverse('bseditor-ajax-save-sheet', args=(sheet.id,)),
     }
 
+    print('****', sheet.sass_variables.all_components)
+
     return render_page(request, 'bseditor/edit_sheet.html', data)
 
 

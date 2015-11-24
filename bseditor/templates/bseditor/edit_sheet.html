@@ -98,11 +98,23 @@ body {
                       </div>
                     </div>
                     <div class="col-sm-1 text-center">
-                      {% if comp.colour_value %}
-                        <span class="form-control colour-swatch" 
-                          style="background-color:{{comp.colour_value}};">
-                        </span>
+                      {% if sass_custom.all_components|getitem:comp.name %}
+{% accessor sass_custom 'all_components' [comp_name] 'colour_value' as colour_value%}
+                        {% if colour_value %}
+                          <span class="form-control colour-swatch" 
+                            style="background-color:{{colour_value}};">
+                          </span>
+                        {% endif %}
+                      {% else %}
+                        {% if comp.colour_value %}
+                          <span class="form-control colour-swatch" 
+                            style="background-color:{{comp.colour_value}};">
+                          </span>
+                        {% endif %}
                       {% endif %}
+
+
+
                     </div>
                   </div>
                 </form>

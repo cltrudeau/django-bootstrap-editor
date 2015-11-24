@@ -110,12 +110,16 @@ class SassVariables(object):
             section.info = section_enc['info']
             for comp_enc in section_enc['components'].values():
                 name = comp_enc['name']
-                value = comp_enc['value']
-                if name in overrides:
-                    value = overrides[name]
 
-                component = section.add_component(name, value, comp_enc['info'])
+                component = section.add_component(name, comp_enc['value'], 
+                    comp_enc['info'])
                 variables.all_components[name] = component
+
+        for key, value in overrides.items():
+            if key in variables.all_components:
+                variables.all_components[key].value = value
+            else:
+                variables.add_component(key, value)
 
         variables.detect_types()
         return variables

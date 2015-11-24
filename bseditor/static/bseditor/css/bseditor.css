@@ -2,6 +2,10 @@ a:focus {
     outline: none;
 }
 
+.has-edits {
+    display:hidden;
+}
+
 .collapser, 
 .collapser:hover,
 .collapser:focus,
