@@ -13,47 +13,13 @@ from awl.decorators import post_required
 from awl.utils import render_page
 
 from .conv import SassVariables
-from .models import Sheet, Version
+from .models import Sheet, Version, PreviewSheet
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-
-@staff_member_required
-def show_version_variables(request, version_id):
-    version = get_object_or_404(Version, id=version_id)
-
-    # use HttpResponse rather than JsonResponse as we don't want to perform
-    # the json.dumps() call, SassVariables must do conversion as it has a
-    # specialized encoder
-    return HttpResponse(content=version.sass_variables.to_json(), 
-        content_type='application/json')
-
-
-@staff_member_required
-def create_sheet(request, version_id):
-    version = get_object_or_404(Version, id=version_id)
-
-    count = 0
-    while(True):
-        try:
-            name = 'new sheet'
-            if count:
-                name += ' %s' % count
-
-            sheet = Sheet.objects.create(name=name, version=version)
-            break
-        except IntegrityError: 
-            sheet = Sheet.objects.filter(
-                name__startswith='new sheet').order_by('created').last()
-            try:
-                count = int(sheet.name[9:]) + 1
-            except ValueError:
-                count += 1
-
-    url = reverse('bseditor-edit-sheet', args=(sheet.id,))
-    return HttpResponseRedirect(url)
-
+# Editor Methods
+# ============================================================================
 
 @staff_member_required
 def edit_sheet(request, sheet_id):
@@ -66,9 +32,9 @@ def edit_sheet(request, sheet_id):
         'cancel_url':reverse('admin:bseditor_sheet_changelist'),
         'ajax_colour_value_url':reverse('bseditor-ajax-colour-value'),
         'ajax_save_sheet':reverse('bseditor-ajax-save-sheet', args=(sheet.id,)),
+        'ajax_save_preview':reverse('bseditor-ajax-save-preview', 
+            args=(sheet.id,)),
     }
-
-    print('****', sheet.sass_variables.all_components)
 
     return render_page(request, 'bseditor/edit_sheet.html', data)
 
@@ -128,16 +94,19 @@ def ajax_colour_value(request):
 
     return JsonResponse(data)
 
+# ============================================================================
+# Admin Methods
+# ============================================================================
 
 @staff_member_required
-def preview_sheet(request, sheet_id):
-    sheet = get_object_or_404(Sheet, id=sheet_id)
+def show_version_variables(request, version_id):
+    version = get_object_or_404(Version, id=version_id)
 
-    data = {
-        'sheet':sheet,
-    }
-
-    return render_page(request, 'bseditor/preview_sheet.html', data)
+    # use HttpResponse rather than JsonResponse as we don't want to perform
+    # the json.dumps() call, SassVariables must do conversion as it has a
+    # specialized encoder
+    return HttpResponse(content=version.sass_variables.to_json(), 
+        content_type='application/json')
 
 
 @staff_member_required
@@ -153,3 +122,112 @@ def deploy_sheet(request, sheet_id):
 
     url = reverse('admin:bseditor_sheet_changelist')
     return HttpResponseRedirect(url)
+
+
+@staff_member_required
+def create_sheet(request, version_id):
+    version = get_object_or_404(Version, id=version_id)
+
+    count = 0
+    while(True):
+        try:
+            name = 'new sheet'
+            if count:
+                name += ' %s' % count
+
+            sheet = Sheet.objects.create(name=name, version=version)
+            break
+        except IntegrityError: 
+            sheet = Sheet.objects.filter(
+                name__startswith='new sheet').order_by('created').last()
+            try:
+                count = int(sheet.name[9:]) + 1
+            except ValueError:
+                count += 1
+
+    url = reverse('bseditor-edit-sheet', args=(sheet.id,))
+    return HttpResponseRedirect(url)
+
+# ============================================================================
+# Preview Handling
+# ============================================================================
+
+def preview_css(request, preview_sheet_id):
+    """Returns a CSS based on the compiled SASS content of the given
+    :class:`PreviewSheet` object
+
+    @param preview_sheet_id: ID of :class:`PreviewSheet` object
+    """
+    preview = get_object_or_404(PreviewSheet, id=preview_sheet_id)
+
+    return HttpResponse(preview.content(), content_type='text/css')
+
+
+def preview_sheet(request, preview_sheet_id):
+    """Displays a sample Bootstrap page using the variables stored in the
+    given :class:`PreviewSheet`
+
+    @param preview_sheet_id: ID of :class:`PreviewSheet` object
+    """
+    preview = get_object_or_404(PreviewSheet, id=preview_sheet_id)
+    data = {
+        'preview':preview,
+        'preview_css_url':reverse('bseditor-preview-css', args=(preview.id,))
+    }
+
+    return render_page(request, 'bseditor/preview_sheet.html', data)
+
+
+@staff_member_required
+def show_saved_sheet_preview(request, sheet_id):
+    """Given a :class:`Sheet` object, reset any associated 
+    :class:`PreviewSheet` and redirect to the :func:`preview_sheet` view
+
+    @param sheet_id: ID of :class`Sheet` object
+    """
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+    try:
+        preview = PreviewSheet.objects.get(sheet=sheet)
+        preview.variables = ''
+        preview.save()
+    except PreviewSheet.DoesNotExist:
+        preview = PreviewSheet.objects.create(sheet=sheet)
+
+    url = reverse('bseditor-preview-sheet', args=(preview.id,))
+    return HttpResponseRedirect(url)
+
+
+@staff_member_required
+@csrf_exempt
+@post_required(['payload'])
+def ajax_save_preview(request, sheet_id):
+    """This method is called by the editor, posting any values that the user
+    has changed but have not yet saved into a :class:`Sheet`.  The values are
+    stored in a :class:`PreviewSheet` associated with the given
+    :class:`Sheet`.
+
+    @param sheet_id: ID of :class`Sheet` object to associate a
+        :class:`PreviewSheet` with
+    """
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+    payload = json.loads(request.POST['payload'])
+    data = {
+        'success':False,
+    }
+
+    try:
+        preview = PreviewSheet.objects.get(sheet=sheet)
+    except PreviewSheet.DoesNotExist:
+        preview = PreviewSheet.objects.create(sheet=sheet)
+
+    try:
+        preview.variables = json.dumps(payload['overrides'])
+        preview.save()
+        preview.content()   # trigger any compilation errors
+        data['success'] = True
+        data['preview_url'] = reverse('bseditor-preview-sheet', 
+            args=(preview.id,))
+    except Exception as e:
+        data['msg'] = str(e)
+
+    return JsonResponse(data)

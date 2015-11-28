@@ -84,7 +84,8 @@ body {
                       <div class="input-group">
                         {% accessor comp 'name' as comp_name %}
                         <input id="comp-{{comp.slug}}" type="text" 
-                          placeholder="{{comp.value}}" 
+                            placeholder="{{comp.value}}" 
+                            data-slug="{{comp.slug}}"
                           {% if sass_custom.all_components|getitem:comp.name %}
         value="{% accessor sass_custom 'all_components' [comp_name] 'value' %}"
                           {% endif %}
@@ -127,6 +128,26 @@ body {
   </div>
 </div>
 
+<div class="modal fade" id="preview-error-dialog" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-label="Close"><span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Error Generating Preview</h4>
+      </div>
+      <div class="modal-body">
+        <p id="preview-error"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock contents %}
 
 {% block script %}
@@ -142,7 +163,6 @@ body {
 var sheet_data = {
   name:"{{sheet.name}}",
   version:{{sheet.version.id}},
-  overrides:{},
 };
 
 // --- Methods
@@ -167,18 +187,6 @@ function section_has_edits(section) {
 function colour_id(field) {
     var id = field.attr('id');
     return id.substr(5);
-}
-
-
-function update_sheet_data(field) {
-    var value = field.val();
-    var id = colour_id(field);
-    if( value.length > 0 ) {
-      sheet_data['overrides'][id] = value;
-    }
-    else {
-      delete sheet_data['overrides'][id];
-    }
 }
 
 
@@ -216,10 +224,6 @@ function ajax_update_colour(field) {
 // --- On Startup
 $(function() {
   // Populate Data
-  $('.var-edit').each(function() {
-    update_sheet_data($(this));
-  });
-
   $('.section-panel').each(function() {
     section_has_edits($(this));
   });
@@ -235,7 +239,6 @@ $(function() {
 
   $('.var-edit').on('input propertychange paste', function() {
     // input has changed, update our section header
-    update_sheet_data($(this));
     section_has_edits($(this).closest('.section-panel'));
   });
 
@@ -255,6 +258,13 @@ $(function() {
   });
 
   $('#save').click(function() {
+    var payload = $.extend({}, sheet_data);
+    payload['values'] = {};
+    $('.var-edit').each(function() {
+
+      payload['values'][
+    });
+
     $.ajax({
       type:'POST',
       url:'{{ajax_save_sheet}}',
@@ -262,6 +272,26 @@ $(function() {
       complete:function() {
         window.location.assign('{{cancel_url}}');
         return false;
+      },
+    });
+
+    return false;
+  });
+
+  $('#preview').click(function() {
+    $.ajax({
+      type:'POST',
+      url:'{{ajax_save_preview}}',
+      data:{'payload':JSON.stringify(sheet_data)},
+      success:function(response) {
+        if( response['success'] ) {
+          window.open(response['preview_url'], '_blank')
+          return false;
+        }
+        else {
+          $('#preview-error').html(response['msg']);
+          $('#preview-error-dialog').modal('toggle');
+        }
       },
     });
 
