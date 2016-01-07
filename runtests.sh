@@ -1,7 +1,7 @@
 #!/bin/bash
 
 find . -name "*.pyc" -exec rm {} \;
-coverage run -p --source=dform --omit="runtests.py" ./load_tests.py
+coverage run -p --source=bseditor --omit="runtests.py" ./load_tests.py
 if [ "$?" = "0" ]; then
     coverage combine
     echo -e "\n\n================================================"

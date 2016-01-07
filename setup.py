@@ -33,6 +33,7 @@ SETUP_ARGS = dict(
         'Django>=1.8',
         'django-awl>=0.8.2',
         'wrench>=0.5.1',
+        'six>=1.10.0',
     ],
 #    tests_require=[
 #        'mock>=1.3.0',

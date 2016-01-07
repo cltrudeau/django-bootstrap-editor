@@ -1,0 +1,40 @@
+a:focus {
+    outline: none;
+}
+
+.collapser, 
+.collapser:hover,
+.collapser:focus,
+.collapser:visited,
+.collapser:active {
+    text-decoration:none;
+}
+
+.collapser:before {
+    font-family:'Glyphicons Halflings';
+    content: "\e114";
+}
+
+.collapser.collapsed:before {
+    content: "\e080";
+}
+
+.swatch {
+    width: 50% !important;
+    display:inline-block !important;
+}
+
+.copy-default {
+
+}
+.copy-default, 
+.copy-default:hover,
+.copy-default:focus,
+.copy-default:visited,
+.copy-default:active {
+    color:#333;
+}
+
+#sheet-filename {
+    padding-left:7px;
+}
