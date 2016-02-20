@@ -1,7 +1,6 @@
-import re, sass, json, copy
+import re, sass, json
 from collections import OrderedDict
 
-from django.utils.text import slugify
 from six import string_types
 
 from awl.css_colours import is_colour
@@ -30,10 +29,10 @@ class Component(object):
         if i > -1:
             value = value[0:i]
 
-        self.value = value
+        self.value = value.strip()
 
     def to_dict(self):
-        d = {}
+        d = OrderedDict()
         if self.info:
             d['info'] = self.info
 
@@ -58,14 +57,16 @@ class Section(object):
 
     def to_dict(self):
         """Creates and returns copy of the Section as a dictionary"""
-        d = {}
-        if self.info:
-            d['info'] = self.info
+        d = OrderedDict()
 
         if self.components:
             d['components'] = OrderedDict()
         for comp in self.components.values():
             d['components'][comp.name] = comp.to_dict()
+
+        if self.info:
+            d['info'] = self.info
+
 
         return d
 
@@ -183,10 +184,10 @@ class BStrapVars(object):
             bstrap_vars.add_component(name, comp['value'], info)
 
         if isinstance(custom, string_types):
-            custom = json.loads(custom)
+            custom = json.loads(custom, object_pairs_hook=OrderedDict)
 
         if isinstance(overrides, string_types):
-            overrides = json.loads(overrides)
+            overrides = json.loads(overrides, object_pairs_hook=OrderedDict)
 
         if custom:
             bstrap_vars.custom = custom
@@ -196,6 +197,55 @@ class BStrapVars(object):
 
         bstrap_vars.detect_types()
         return bstrap_vars
+
+    @classmethod
+    def factory_from_sass_file(cls, filename):
+        """A factory for BStrapVars that uses a Bootstrap SASS definition file
+        to construct the information.
+        """
+        bsvars = BStrapVars()
+
+        with open(filename) as f:
+            section = None
+            next_info = ''
+            for count, line in enumerate(f):
+                line = line.strip()
+                if not line:
+                    continue
+
+                if line.startswith('//==='):
+                    name = line[5:].strip()
+                    section = bsvars.add_section(name)
+                elif line.startswith('//=='):
+                    name = line[4:].strip()
+                    section = bsvars.add_section(name)
+                elif line.startswith('//##'):
+                    info = line[4:].strip()
+                    section.info = info
+                elif line.startswith('//**'):
+                    info = line[4:].strip()
+                    next_info = info
+                else:
+                    if not section:
+                        # no section defined yet, ignore line
+                        continue
+
+                    try:
+                        name, value = line.split(':')
+                        if name[0] != '$':
+                            raise ValueError
+                    except ValueError:
+                        # something has gone wrong, ignore the line
+                        continue
+
+                    name = name[1:]
+                    component = section.add_component(name, value, next_info)
+                    bsvars.all_components[name] = component
+                    next_info = ''
+
+        # file parsed, process found data for more info
+        bsvars.detect_types()
+        return bsvars
 
     def base_to_json(self):
         """Serializes the base value variables into JSON."""
@@ -284,168 +334,17 @@ class BStrapVars(object):
                 self.all_components[name].colour_value = value
                 self.colour_components[name] = self.all_components[name]
 
-
-class SassVariables(object):
-    # -- CSS matching expression
-    #
-    # Typical pattern to match:
-    #
-    #  .component-offset-horizontal {
-    #     color: 180px; }
-    #
-    css_pieces = re.compile(
-        """
-        \.                # starts with period
-        ([^\s]*)          # css class name everything up to white space
-        [^:]*:            # eat everything up to first ":"
-        \s*               # eat whitespace
-        ([^;]*)           # value is everything up to first ";"
-        .*\}              # eat everything up to the closing }
-        """, re.VERBOSE)
-
-    def __init__(self):
-        self.defaults = OrderedDict()
-        self.custom = OrderedDict()
-        self.overrides = OrderedDict()
-
-        self.sections = OrderedDict()
-        self.colour_components = OrderedDict()
-
-    @classmethod
-    def factory_from_sass_file(cls, filename):
-        """Constructs a :class:`SassVariables` object populating only the
-        default values based on the contents of the given sass file.
-
-        @param filename: name of sass file to parse
-        """
-        variables = SassVariables()
-        variables.parse_sass_file(filename)
-        return variables
-
-    @classmethod
-    def factory_from_dicts(cls, sections=None, defaults=None, custom=None, 
-            overrides=None):
-        """Constructs a :class:`SassVariables` object using some set of dicts.
-        At least one of ``sections`` or ``defaults`` must be given.
-
-        @param sections: a dict of sections, each of which contains one or
-            more dicts of components
-
-        """
-
-
-        variables = SassVariables()
-
-        for section_enc in defaults.values():
-            section = variables.add_section(section_enc['name'])
-            section.info = section_enc['info']
-            for comp_enc in section_enc['components'].values():
-                name = comp_enc['name']
-
-                component = section.add_component(name, comp_enc['value'], 
-                    comp_enc['info'])
-                variables.all_components[name] = component
-
-        for key, value in overrides.items():
-            if key in variables.all_components:
-                variables.all_components[key].value = value
-            else:
-                variables.add_component(key, value)
-
-        variables.detect_types()
-        return variables
-
-    @classmethod
-    def factory_from_json(cls, content):
-        d = json.loads(content, object_pairs_hook=OrderedDict)
-        return cls.factory_from_dict(d)
-
-    def to_json(self):
-        return json.dumps(self.sections, cls=SassEncoder)
-
-    def add_section(self, name):
-        section = Section(name)
-        self.sections[name] = section
-        return section
-
-    def add_component(self, name, value, info=''):
-        # add a component that is not in a section
-        comp = Component(name, value, info)
-        self.all_components[name] = comp
-        return comp
-
-    def parse_sass_file(self, filename):
-        with open(filename) as f:
-            section = None
-            next_info = ''
-            for count, line in enumerate(f):
-                line = line.strip()
-                if not line:
-                    continue
-
-                if line.startswith('//==='):
-                    name = line[5:].strip()
-                    section = self.add_section(name)
-                elif line.startswith('//=='):
-                    name = line[4:].strip()
-                    section = self.add_section(name)
-                elif line.startswith('//##'):
-                    info = line[4:].strip()
-                    section.info = info
-                elif line.startswith('//**'):
-                    info = line[4:].strip()
-                    next_info = info
-                else:
-                    if not section:
-                        # no section defined yet, ignore line
-                        continue
-
-                    try:
-                        name, value = line.split(':')
-                        if name[0] != '$':
-                            raise ValueError
-                    except ValueError:
-                        # something has gone wrong, ignore the line
-                        continue
-
-                    name = name[1:]
-                    component = section.add_component(name, value, next_info)
-                    self.all_components[name] = component
-                    next_info = ''
-
-        # file parsed, process found data for more info
-        self.detect_types()
-
-    def detect_types(self):
-        # uses the sass compiler to create fake CSS classes in order to
-        # evaluate the expressions in each component.value, detects those that
-        # are colours and puts the detected value in the component
-        src = ['$bootstrap-sass-asset-helper:false;']
-        for name, component in self.all_components.items():
-            src.append('$%s:%s;' % (name, component.value))
-            src.append('.%s{color:%s}' % (name, component.value))
-
-        #with open('last_compile.txt', 'w') as f:
-        #    f.write('\n'.join(src))
-
-        result = sass.compile(string='\n'.join(src))
-        for match in self.css_pieces.finditer(result):
-            name = match.group(1)
-            value = match.group(2).strip()
-            if is_colour(value):
-                self.all_components[name].colour_value = value
-                self.colour_components[name] = self.all_components[name]
-
 # ============================================================================
 # Parser
 # ============================================================================
 
 if __name__ == '__main__':
     import sys
-    sass_values = SassVariables.factory_from_sass_file(sys.argv[1])
+    print('=====>', sys.argv[1])
+    bsv = BStrapVars.factory_from_sass_file(sys.argv[1])
 
     print('=====================================')
-    for name, section in sass_values.sections.items():
+    for name, section in bsv.sections.items():
         print(name + ':')
         for comp_name, comp in section.components.items():
             print('   %s:*%s*' % (comp_name, comp.value))
@@ -455,12 +354,12 @@ if __name__ == '__main__':
     print('=====================================')
     print('==         Colours                 ==')
     print('=====================================')
-    for name, component in sass_values.colour_components.items():
+    for name, component in bsv.colour_components.items():
         print(name)
         print('   ' + component.value)
         print('   =>' + component.colour_value)
 
     print('=====================================')
-    print('==            JSON                 ==')
+    print('==          BASE JSON              ==')
     print('=====================================')
-    print(sass_values.to_json())
+    print(bsv.base_to_json())

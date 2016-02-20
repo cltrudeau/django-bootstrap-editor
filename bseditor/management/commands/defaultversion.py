@@ -7,7 +7,7 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from bseditor.conv import SassVariables
+from bseditor.conv import BStrapVars
 from bseditor.models import Version
 
 versions = (
@@ -24,7 +24,7 @@ class Command(BaseCommand):
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 'static', version[1]))
 
-            sass_values = SassVariables.factory_from_sass_file(filename)
-            Version.objects.create(name=version[0], basefile=version[2],
-                variables=sass_values.to_json())
+            bsv = BStrapVars.factory_from_sass_file(filename)
+            Version.objects.create(name=version[0], base_file_name=version[2],
+                store=bsv.base_to_json())
             print('Created Version=%s' % version[0])

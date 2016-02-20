@@ -32,7 +32,7 @@ SETUP_ARGS = dict(
     install_requires=[
         'Django>=1.8',
         'django-awl>=0.8.2',
-        'wrench>=0.5.1',
+        'wrench>=0.7',
         'six>=1.10.0',
     ],
 #    tests_require=[

@@ -1,6 +1,5 @@
 # bseditor.models.py
-import logging, os, json, datetime
-from collections import OrderedDict
+import logging, os
 
 from django.conf import settings
 from django.core.management import call_command
@@ -12,7 +11,7 @@ import sass
 from awl.models import TimeTrackModel
 from wrench.utils import When, dynamic_load
 
-from .conv import SassVariables
+from .conv import BStrapVars
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +27,17 @@ class Version(TimeTrackModel):
     version.
     """
     name = models.CharField(max_length=50, unique=True)
-    variables = models.TextField()
-    basefile = models.CharField(max_length=80)
+    base_file_name = models.CharField(max_length=80)
+    store = models.TextField()
 
     def __str__(self):
         return 'Version(id=%s, name=%s)' % (self.id, self.name)
 
-    @property
-    def sass_variables(self):
-        """Returns the contents of the ``variables`` field as a SassVersion
-        object.
+    def get_vars(self):
+        """Returns a BStrapVars object populated with content stored in this 
+        instance.
         """
-        return SassVariables.factory_from_json(self.variables)
+        return BStrapVars.factory(self.store)
 
 
 @python_2_unicode_compatible
@@ -48,24 +46,24 @@ class Sheet(TimeTrackModel):
     """
     name = models.CharField(max_length=50, unique=True)
     version = models.ForeignKey(Version)
-    variables = models.TextField(blank=True)
+    store = models.TextField(blank=True)
 
     def __str__(self):
         return 'Sheet(id=%s version.id=%s)' % (self.id, self.version.id)
 
-    @property
-    def sass_variables(self):
-        """Returns the contents of the ``variables`` field as a SassVersion
-        object.
+    def get_vars(self, overrides=None):
+        """Returns a BStrapVars object populated based on this instance and
+        its corresponding :class:`Version`.
         """
-        if self.variables:
-            overrides = json.loads(self.variables, 
-                object_pairs_hook=OrderedDict)
-        else:
-            overrides = {}
+        kwargs = {
+            'base':self.version.store,
+        }
+        if self.store:
+            kwargs['custom'] = self.store
+        if overrides:
+            kwargs['overrides'] = overrides
 
-        sv = SassVariables.factory_from_dict({}, overrides)
-        return sv
+        return  BStrapVars.factory(**kwargs)
 
     @property
     def filename(self):
@@ -90,31 +88,21 @@ class Sheet(TimeTrackModel):
         return last_modified < last_updated
 
     def compiled_string(self, overrides=None):
-        base = json.loads(self.version.variables, object_pairs_hook=OrderedDict)
-        variables = {}
-        if self.variables:
-            variables = json.loads(self.variables, 
-                object_pairs_hook=OrderedDict)
-
-        if overrides:
-            variables.update(overrides)
-
-        all_variables = SassVariables.factory_from_dict(base, variables)
-        import_file = os.path.abspath(os.path.join(os.path.dirname(__file__),
-            'static/bseditor/sass', self.version.basefile))
+        import_file_name = os.path.abspath(os.path.join(os.path.dirname(
+            __file__), 'static/bseditor/sass', self.version.base_file_name))
 
         src = ['$bootstrap-sass-asset-helper:false;']
-        for name, component in all_variables.all_components.items():
+        components = self.get_variables(overrides).all_components
+        for name, component in components.items():
             src.append('$%s:%s;' % (name, component.value))
 
-        src.append('@import "%s";' % import_file)
+        src.append('@import "%s";' % import_file_name)
 
         if getattr(settings, 'BSEDITOR_TRACK_LAST_COMPILE', False):
             with open('last_compile.txt', 'w') as f:
                 f.write('\n'.join(src))
 
         return sass.compile(string='\n'.join(src))
-
 
     def deploy(self):
         result = self.compiled_string()
@@ -140,16 +128,14 @@ class PreviewSheet(TimeTrackModel):
     saved so that they can be previewed.
     """
     sheet = models.ForeignKey(Sheet)
-    variables = models.TextField(blank=True)
+    store = models.TextField(blank=True)
 
     def __str__(self):
         return 'PreviewSheet(id=%s sheet.id=%s)' % (self.id, self.sheet.id)
 
     def content(self):
-        if self.variables:
-            variables = json.loads(self.variables, 
-                object_pairs_hook=OrderedDict)
-        else:
-            variables = {}
+        overrides = None
+        if self.store:
+            overrides = self.store
 
-        return self.sheet.compiled_string(variables)
+        return self.sheet.compiled_string(overrides)

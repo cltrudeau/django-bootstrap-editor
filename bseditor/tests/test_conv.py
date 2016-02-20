@@ -1,14 +1,94 @@
-import json
+import json, runpy
 from collections import OrderedDict
 
 from django.test import TestCase
+from wrench.contexts import temp_file, capture_stdout
 
 from bseditor.conv import BStrapVars, Section, Component
 
 # ============================================================================
 
-def pprint(data):
+def pprint(data):   # pragma: no cover
     print(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
+
+# ============================================================================
+
+SASS_FILE = """
+$bootstrap-sass-asset-helper: false !default;
+// --------------------------------------------------
+
+//== Colors
+//
+//## Gray and brand colors for use across Bootstrap.
+
+$gray-base:              #000 !default;
+
+//== Scaffolding
+//
+//## Settings for some of the most global styles.
+
+//** Background color for `<body>`.
+$body-bg:               #fff !default;
+//** Global text color on `<body>`.
+$text-color:            $gray-base   // ignore this
+
+//=== Inverted navbar
+// Reset inverted navbar basics
+$navbar-inverse-bg:                         #222 !default;
+"""
+
+SASS_FILE_DICT = OrderedDict([
+    ('sections', OrderedDict([
+        ('Colors', OrderedDict([
+            ('components', OrderedDict([
+                ('gray-base', {'value':'#000'}),
+            ])),
+            ('info', 'Gray and brand colors for use across Bootstrap.'),
+        ])),
+        ('Scaffolding', OrderedDict([
+            ('components', OrderedDict([
+                ('body-bg', OrderedDict([
+                    ('info', 'Background color for `<body>`.'),
+                    ('value', '#fff'),
+                ])),
+                ('text-color', OrderedDict([
+                    ('info', 'Global text color on `<body>`.'),
+                    ('value', '$gray-base'),
+                ]))
+            ])),
+            ('info', 'Settings for some of the most global styles.'),
+        ])),
+        ('Inverted navbar', OrderedDict([
+            ('components', OrderedDict([
+                ('navbar-inverse-bg', {'value':'#222'}),
+            ])),
+        ])),
+    ]))
+])
+
+# JSON version of test SASS file
+SASS_JSON = json.dumps(SASS_FILE_DICT)
+
+# -----
+# bad file for checking error conditions
+ERROR_SASS_FILE = """
+//== Colors
+$gray-base:              #000 !default;
+foo: #000;
+"""
+
+ERROR_SASS_FILE_DICT = OrderedDict([
+    ('sections', OrderedDict([
+        ('Colors', OrderedDict([
+            ('components', OrderedDict([
+                ('gray-base', {'value':'#000'}),
+            ])),
+        ])),
+    ]))
+])
+
+# JSON version of test error SASS file
+ERROR_SASS_JSON = json.dumps(ERROR_SASS_FILE_DICT)
 
 # ============================================================================
 # Test Class
@@ -112,13 +192,15 @@ class BStrapVarsTest(TestCase):
         result = list(bsv.all_value_pairs())
         self.assertEqual(result, expected)
 
-        # override some of the custom values
+        # override some of the custom values, blank override means use default
         o = {
             self.comp1_1.name:'#CCC',
+            self.comp2_1.name:'',
             self.compN_2.name:'three',
         }
 
         expected[0] = (self.comp1_1.name, '#CCC')
+        expected[2] = (self.comp2_1.name, '#fff')
         expected[5] = (self.compN_2.name, 'three')
 
         bsv = BStrapVars.factory(self.data, c, o)
@@ -141,3 +223,42 @@ class BStrapVarsTest(TestCase):
 
         self.assertEqual(result_base, expected_base)
         self.assertEqual(result_custom, expected_custom)
+
+    def test_file_parse(self):
+        # write SASS_FILE into a file that gets cleaned up 
+        with temp_file() as filename:
+            f = open(filename, 'w')
+            f.write(SASS_FILE)
+            f.close()
+
+            result = BStrapVars.factory_from_sass_file(filename)
+            result_json = result.base_to_json()
+            self.assertEqual(SASS_JSON, result_json)
+
+        # test error handling properly ignores bad variables
+        with temp_file() as filename:
+            f = open(filename, 'w')
+            f.write(ERROR_SASS_FILE)
+            f.close()
+
+            result = BStrapVars.factory_from_sass_file(filename)
+            result_json = result.base_to_json()
+            self.assertEqual(ERROR_SASS_JSON, result_json)
+
+    def test_module_main(self):
+        # write SASS_FILE into a file that gets cleaned up 
+        with capture_stdout():
+            with temp_file() as filename:
+                f = open(filename, 'w')
+                f.write(SASS_FILE)
+                f.close()
+
+                import sys
+                keep = sys.argv
+                try:
+                    sys.argv[1] = filename
+                except IndexError:
+                    sys.argv.append(filename)
+
+                runpy.run_module('bseditor.conv', run_name='__main__')
+                sys.argv = keep
