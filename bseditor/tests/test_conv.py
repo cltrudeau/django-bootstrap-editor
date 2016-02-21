@@ -102,23 +102,23 @@ class DummyVar(object):
 class BStrapVarsTest(TestCase):
     def setUp(self):
         self.all_comps = []
-        self.colour_comps = []
+        self.colour_values = OrderedDict()
         dv = DummyVar()
         self.section1 = Section(dv, 'Colors', 'Gray and brand colors')
         self.comp1_1 = self.section1.add_component('gray-base', '#000')
         self.all_comps.append(self.comp1_1)
-        self.colour_comps.append(self.comp1_1)
+        self.colour_values[self.comp1_1] = '#000'
         self.comp1_2 = self.section1.add_component('gray-darker', 
             'lighten($gray-base, 13.5%)')
         self.all_comps.append(self.comp1_2)
-        self.colour_comps.append(self.comp1_2)
+        self.colour_values[self.comp1_2] = '#000'
 
         self.section2 = Section(dv, 'Scaffolding', 
             'Settings for some of the most global styles')
         self.comp2_1 = self.section2.add_component('body-bg', '#fff', 
             'Background color for <body>')
         self.all_comps.append(self.comp2_1)
-        self.colour_comps.append(self.comp2_1)
+        self.colour_values[self.comp2_1] = '#fff'
         self.comp2_2 = self.section2.add_component('body-font', 'arial')
         self.all_comps.append(self.comp2_2)
 
@@ -128,7 +128,7 @@ class BStrapVarsTest(TestCase):
 
         self.compN_1 = Component('thing', '#333', 'some thing')
         self.all_comps.append(self.compN_1)
-        self.colour_comps.append(self.compN_1)
+        self.colour_values[self.compN_1] = '#333'
         self.compN_2 = Component('other', 'not a colour')
         self.all_comps.append(self.compN_2)
         self.compN_3 = Component('place', 'Egypt')
@@ -144,6 +144,15 @@ class BStrapVarsTest(TestCase):
         self.data['nonsections'] = self.nonsections
 
     def test_base(self):
+        # check we don't blow up if no data
+        BStrapVars.factory({})
+        BStrapVars.factory({}, {})
+        BStrapVars.factory({}, {}, {})
+        BStrapVars.factory('{}')
+        BStrapVars.factory('{}', '{}')
+        BStrapVars.factory('{}', '{}', '{}')
+
+        # -- test valid data
         bsv = BStrapVars.factory(self.data)
 
         # check sections
@@ -155,18 +164,14 @@ class BStrapVarsTest(TestCase):
         result = [comp.name for comp in bsv.all_components.values()]
         self.assertEqual(result, expected)
 
-        # check colour components
-        expected = [comp.name for comp in self.colour_comps]
-        result = [comp.name for comp in bsv.colour_components.values()]
-        self.assertEqual(result, expected)
-
-        expected = ['#000', '#222222', '#fff', '#333']
-        result = [comp.colour_value for comp in bsv.colour_components.values()]
-        self.assertEqual(result, expected)
-
         # check values
         expected = [(comp.name, comp.value) for comp in self.all_comps]
         result = list(bsv.all_value_pairs())
+        self.assertEqual(result, expected)
+
+        # check colour values
+        expected = ['#000', '#222222', '#fff', '#333']
+        result = list(bsv.colour_values.values())
         self.assertEqual(result, expected)
 
     def test_custom_and_overrides(self):

@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from awl.decorators import post_required
 from awl.utils import render_page
 
-from .conv import SassVariables
+from .conv import BStrapVars
 from .models import Sheet, Version, PreviewSheet
 
 logger = logging.getLogger(__name__)
@@ -27,8 +27,7 @@ def edit_sheet(request, sheet_id):
 
     data = {
         'sheet':sheet,
-        'sass_base':sheet.version.sass_variables,
-        'sass_custom':sheet.sass_variables,
+        'bstrap_vars':sheet.get_vars(),
         'cancel_url':reverse('admin:bseditor_sheet_changelist'),
         'ajax_colour_value_url':reverse('bseditor-ajax-colour-value'),
         'ajax_save_sheet':reverse('bseditor-ajax-save-sheet', args=(sheet.id,)),
@@ -49,7 +48,7 @@ def ajax_save_sheet(request, sheet_id):
 
     try:
         sheet.name = payload['name']
-        sheet.variables = json.dumps(payload['overrides'])
+        sheet.store = json.dumps(payload['overrides'])
         sheet.save()
         sheet.deploy()
         messages.success(request, 'Saved & deployed %s' % sheet.filename)
@@ -75,18 +74,15 @@ def ajax_colour_value(request):
     payload = json.loads(request.POST['payload'])
     sass_variable = payload['sass_variable']
     version = get_object_or_404(Version, id=payload['version'])
-    content = json.loads(version.variables, object_pairs_hook=OrderedDict)
+    content = json.loads(version.store, object_pairs_hook=OrderedDict)
     data = {
         'success':False,
     }
 
     try:
-        all_variables = SassVariables.factory_from_dict(content,
-            payload['overrides'])
-        result = all_variables.all_components[sass_variable].colour_value
-        if result:
-            data['colour'] = result
-            data['success'] = True
+        bsv = BStrapVars.factory(content, overrides=payload['overrides'])
+        data['colour'] = bsv.colour_values[sass_variable]
+        data['success'] = True 
     except (sass.CompileError, KeyError):
         # compilation errors, key errors, all should result in the default
         # "success:False" in response
@@ -103,9 +99,9 @@ def show_version_variables(request, version_id):
     version = get_object_or_404(Version, id=version_id)
 
     # use HttpResponse rather than JsonResponse as we don't want to perform
-    # the json.dumps() call, SassVariables must do conversion as it has a
+    # the json.dumps() call, BStrapVars must do conversion as it has a
     # specialized encoder
-    return HttpResponse(content=version.sass_variables.to_json(), 
+    return HttpResponse(content=version.get_vars().base_to_json(), 
         content_type='application/json')
 
 
@@ -188,7 +184,7 @@ def show_saved_sheet_preview(request, sheet_id):
     sheet = get_object_or_404(Sheet, id=sheet_id)
     try:
         preview = PreviewSheet.objects.get(sheet=sheet)
-        preview.variables = ''
+        preview.store = ''
         preview.save()
     except PreviewSheet.DoesNotExist:
         preview = PreviewSheet.objects.create(sheet=sheet)
@@ -221,7 +217,7 @@ def ajax_save_preview(request, sheet_id):
         preview = PreviewSheet.objects.create(sheet=sheet)
 
     try:
-        preview.variables = json.dumps(payload['overrides'])
+        preview.store = json.dumps(payload['overrides'])
         preview.save()
         preview.content()   # trigger any compilation errors
         data['success'] = True

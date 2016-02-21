@@ -8,7 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.text import slugify
 
 import sass
-from awl.models import TimeTrackModel
+from awl.absmodels import TimeTrackModel
 from wrench.utils import When, dynamic_load
 
 from .conv import BStrapVars

@@ -13,7 +13,6 @@ class Component(object):
     def __init__(self, name, value, info=''):
         self.name = name
         self.info = info
-        self.colour_value = ''
 
         # normalize value to the bare portion we use
         value = value.strip()
@@ -93,10 +92,10 @@ class BStrapVars(object):
         self.sections = OrderedDict()
         self.nonsections = OrderedDict()
         self.all_components = OrderedDict()
-        self.colour_components = OrderedDict()
 
-        self.custom = OrderedDict()
-        self.overrides = OrderedDict()
+        self.custom_values = OrderedDict()
+        self.override_values = OrderedDict()
+        self.colour_values = OrderedDict()
 
     @classmethod
     def factory(cls, base, custom=None, overrides=None):
@@ -172,14 +171,17 @@ class BStrapVars(object):
         if isinstance(base, string_types):
             base = json.loads(base, object_pairs_hook=OrderedDict)
 
-        for name, section_enc in base['sections'].items():
+        sections = base.get('sections', {})
+        for name, section_enc in sections.items():
             info = section_enc.get('info', '')
             section = bstrap_vars.add_section(name, info)
-            for comp_name, comp in section_enc['components'].items():
+            components = section_enc.get('components', {})
+            for comp_name, comp in components.items():
                 info = comp.get('info', '')
                 section.add_component(comp_name, comp['value'], info)
 
-        for name, comp in base['nonsections'].items():
+        nonsections = base.get('nonsections', {})
+        for name, comp in nonsections.items():
             info = comp.get('info', '')
             bstrap_vars.add_component(name, comp['value'], info)
 
@@ -190,10 +192,10 @@ class BStrapVars(object):
             overrides = json.loads(overrides, object_pairs_hook=OrderedDict)
 
         if custom:
-            bstrap_vars.custom = custom
+            bstrap_vars.custom_values = custom
 
         if overrides:
-            bstrap_vars.overrides = overrides
+            bstrap_vars.override_values = overrides
 
         bstrap_vars.detect_types()
         return bstrap_vars
@@ -266,7 +268,7 @@ class BStrapVars(object):
 
     def custom_to_json(self):
         """Serializes the custom component pieces to JSON."""
-        return json.dumps(self.custom)
+        return json.dumps(self.custom_values)
         
     def add_section(self, name, info=''):
         """Creates a new Section and associates it with this object.
@@ -294,8 +296,8 @@ class BStrapVars(object):
         return component
 
     def get_value(self, name):
-        if name in self.overrides:
-            value = self.overrides[name]
+        if name in self.override_values:
+            value = self.override_values[name]
             if value:
                 return value
             else:
@@ -303,8 +305,8 @@ class BStrapVars(object):
                 # custom value
                 return self.all_components[name].value
 
-        if name in self.custom:
-            return self.custom[name]
+        if name in self.custom_values:
+            return self.custom_values[name]
 
         return self.all_components[name].value
 
@@ -316,12 +318,13 @@ class BStrapVars(object):
 
     def detect_types(self):
         # uses the sass compiler to create fake CSS classes in order to
-        # evaluate the expressions in each component.value, detects those that
-        # are colours and puts the detected value in the component
+        # evaluate the expressions in each value (whether in the component or
+        # overridden), detects those that are colours and puts the detected
+        # value in the component
         src = ['$bootstrap-sass-asset-helper:false;']
-        for name, component in self.all_components.items():
-            src.append('$%s:%s;' % (name, component.value))
-            src.append('.%s{color:%s}' % (name, component.value))
+        for name, value in self.all_value_pairs():
+            src.append('$%s:%s;' % (name, value))
+            src.append('.%s{color:%s}' % (name, value))
 
         #with open('last_compile.txt', 'w') as f:
         #    f.write('\n'.join(src))
@@ -331,8 +334,7 @@ class BStrapVars(object):
             name = match.group(1)
             value = match.group(2).strip()
             if is_colour(value):
-                self.all_components[name].colour_value = value
-                self.colour_components[name] = self.all_components[name]
+                self.colour_values[name] = value
 
 # ============================================================================
 # Parser
@@ -354,10 +356,10 @@ if __name__ == '__main__':
     print('=====================================')
     print('==         Colours                 ==')
     print('=====================================')
-    for name, component in bsv.colour_components.items():
+    for name, value in bsv.colour_values.items():
         print(name)
-        print('   ' + component.value)
-        print('   =>' + component.colour_value)
+        print('   ' + bsv.get_value(name))
+        print('   =>' + value)
 
     print('=====================================')
     print('==          BASE JSON              ==')

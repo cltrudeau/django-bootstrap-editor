@@ -53,14 +53,14 @@ body {
   <div class="col-sm-10 col-sm-offset-1">
     <div id="accordian" class="panel-group" role="tablist" 
         aria-multiselectable="true">
-      {% for section in sass_base.sections.values %}
+      {% for section in bstrap_vars.sections.values %}
         <div class="section-panel panel panel-default">
-          <div id="heading-{{section.slug}}" class="panel-heading" role="tab">
+          <div id="heading-{{section.name}}" class="panel-heading" role="tab">
             <h3 class="panel-title">
               <a role="button" data-toggle="collapse" data-parent="#accordian"
-                  href="#collapse-{{section.slug}}" aria-expanded="false"
+                  href="#collapse-{{section.name}}" aria-expanded="false"
                   class="collapser collapsed" 
-                  aria-controls="collapse-{{section.slug}}">
+                  aria-controls="collapse-{{section.name}}">
                 {{section.name}}
               </a>
               <span class="has-edits glyphicon glyphicon-pencil"></span>
@@ -69,27 +69,34 @@ body {
               <h5 class="text-muted">{{section.info}}</h5>
             {% endif %}
           </div>
-          <div id="collapse-{{section.slug}}" role="tabpanel"
+          <div id="collapse-{{section.name}}" role="tabpanel"
               class="panel-collapse collapse" 
-              aria-labelledby="heading-{{section.slug}}">
+              aria-labelledby="heading-{{section.name}}">
             <div class="panel-body">
               {% for comp in section.components.values %}
                 <form class="form-horizontal" role="form" autocomplete="off">
                   <div class="form-group">
-                    <label for="comp-{{comp.slug}}" 
+                    <label for="comp-{{comp.name}}" 
                         class="col-sm-2 control-label">
                       {{comp.name}}
                     </label>
+      {% accessor comp 'name' as comp_name %}
+      {% accessor bstrap_vars 'override_values' [comp_name] as override_value %}
+      {% accessor bstrap_vars 'colour_values' [comp_name] as colour_value %}
+                    <!-- 
+                      comp_name: {{comp_name}} 
+                      override_value: {{override_value}} 
+                      colour_value: {{colour_value}} 
+                    -->
                     <div class="col-sm-7">
                       <div class="input-group">
-                        {% accessor comp 'name' as comp_name %}
-                        <input id="comp-{{comp.slug}}" type="text" 
+                        <input id="comp-{{comp.name}}" type="text" 
                             placeholder="{{comp.value}}" 
-                            data-slug="{{comp.slug}}"
-                          {% if sass_custom.all_components|getitem:comp.name %}
-        value="{% accessor sass_custom 'all_components' [comp_name] 'value' %}"
+                            data-name="{{comp.name}}"
+                          {% if override_value %}
+                            value="{{override_value}}"
                           {% endif %}
-  class="var-edit form-control{%if comp.colour_value%} colour-value{%endif%}"/>
+      class="var-edit form-control{%if colour_value%} colour-value{%endif%}"/>
                         <div class="input-group-addon">
                           <a href="javascript:void(0)" class="copy-default"
                               title="set to default">
@@ -99,23 +106,11 @@ body {
                       </div>
                     </div>
                     <div class="col-sm-1 text-center">
-                      {% if sass_custom.all_components|getitem:comp.name %}
-{% accessor sass_custom 'all_components' [comp_name] 'colour_value' as colour_value%}
-                        {% if colour_value %}
-                          <span class="form-control colour-swatch" 
-                            style="background-color:{{colour_value}};">
-                          </span>
-                        {% endif %}
-                      {% else %}
-                        {% if comp.colour_value %}
-                          <span class="form-control colour-swatch" 
-                            style="background-color:{{comp.colour_value}};">
-                          </span>
-                        {% endif %}
+                      {% if colour_value %}
+                        <span class="form-control colour-swatch" 
+                          style="background-color:{{colour_value}};">
+                        </span>
                       {% endif %}
-
-
-
                     </div>
                   </div>
                 </form>
@@ -194,6 +189,8 @@ function ajax_update_colour(field) {
   var payload = $.extend({}, sheet_data);
   var id = colour_id(field);
   payload['sass_variable'] = id;
+  payload['overrides'] = {};
+  payload['overrides'][id] = field.val();
 
   // set the swatch to loading
   var swatch = field.closest('form').find('.colour-swatch');
@@ -258,13 +255,14 @@ $(function() {
   });
 
   $('#save').click(function() {
+/*
     var payload = $.extend({}, sheet_data);
     payload['values'] = {};
     $('.var-edit').each(function() {
 
       payload['values'][
     });
-
+*/
     $.ajax({
       type:'POST',
       url:'{{ajax_save_sheet}}',
