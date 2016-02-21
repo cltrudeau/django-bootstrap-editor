@@ -81,11 +81,11 @@ body {
                       {{comp.name}}
                     </label>
       {% accessor comp 'name' as comp_name %}
-      {% accessor bstrap_vars 'override_values' [comp_name] as override_value %}
+      {% accessor bstrap_vars 'custom_values' [comp_name] as custom_value %}
       {% accessor bstrap_vars 'colour_values' [comp_name] as colour_value %}
                     <!-- 
                       comp_name: {{comp_name}} 
-                      override_value: {{override_value}} 
+                      custom_value: {{custom_value}} 
                       colour_value: {{colour_value}} 
                     -->
                     <div class="col-sm-7">
@@ -93,8 +93,8 @@ body {
                         <input id="comp-{{comp.name}}" type="text" 
                             placeholder="{{comp.value}}" 
                             data-name="{{comp.name}}"
-                          {% if override_value %}
-                            value="{{override_value}}"
+                          {% if custom_value %}
+                            value="{{custom_value}}"
                           {% endif %}
       class="var-edit form-control{%if colour_value%} colour-value{%endif%}"/>
                         <div class="input-group-addon">
@@ -255,18 +255,19 @@ $(function() {
   });
 
   $('#save').click(function() {
-/*
     var payload = $.extend({}, sheet_data);
-    payload['values'] = {};
+    payload['overrides'] = {};
     $('.var-edit').each(function() {
-
-      payload['values'][
+      var value = $(this).val();
+      if( value ) {
+        payload['overrides'][$(this).data('name')] = value;
+      }
     });
-*/
+
     $.ajax({
       type:'POST',
       url:'{{ajax_save_sheet}}',
-      data:{'payload':JSON.stringify(sheet_data)},
+      data:{'payload':JSON.stringify(payload)},
       complete:function() {
         window.location.assign('{{cancel_url}}');
         return false;
