@@ -29,13 +29,17 @@ body {
         <div class="col-sm-10 col-sm-offset-1">
           <form class="navbar-form">
             <div class="form-group">
-              <label for="sheet-name" class="control-label">Sheet Name:</label>
+              <label for="sheet-name" class="control-label">Sheet Name:
+                <span style="visibility:hidden" 
+                  class="edit-flag glyphicon glyphicon-star"></span>
+              </label>
               <input id="sheet-name" type="text" class="form-control"
                 value="{{sheet.name}}"/>
               <span id="sheet-filename">{{sheet.filename}}</span>
             </div>
             <div class="form-group pull-right">
-              <button id="save" class="btn btn-sm btn-primary">Save</button>
+              <button id="save" class="btn btn-sm btn-primary" disabled>
+                Save</button>
               <button id="cancel" class="btn btn-sm btn-default">Cancel</button>
               <button id="preview" class="btn btn-sm btn-success">
                 Preview</button>
@@ -63,7 +67,13 @@ body {
                   aria-controls="collapse-{{section.name}}">
                 {{section.name}}
               </a>
-              <span class="has-edits glyphicon glyphicon-pencil"></span>
+              <span class="has-custom glyphicon glyphicon-pencil" 
+                data-toggle="tooltip" data-placement="bottom" 
+                title="Section has customizations"></span>
+              <span style="visibility:hidden" 
+                data-toggle="tooltip" data-placement="bottom"
+                title="Section has edits"
+                class="edit-flag glyphicon glyphicon-star"></span>
             </h3>
             {% if section.info %}
               <h5 class="text-muted">{{section.info}}</h5>
@@ -79,15 +89,12 @@ body {
                     <label for="comp-{{comp.name}}" 
                         class="col-sm-2 control-label">
                       {{comp.name}}
+                      <span style="visibility:hidden" 
+                        class="edit-flag glyphicon glyphicon-star"></span>
                     </label>
       {% accessor comp 'name' as comp_name %}
       {% accessor bstrap_vars 'custom_values' [comp_name] as custom_value %}
       {% accessor bstrap_vars 'colour_values' [comp_name] as colour_value %}
-                    <!-- 
-                      comp_name: {{comp_name}} 
-                      custom_value: {{custom_value}} 
-                      colour_value: {{colour_value}} 
-                    -->
                     <div class="col-sm-7">
                       <div class="input-group">
                         <input id="comp-{{comp.name}}" type="text" 
@@ -95,13 +102,19 @@ body {
                             data-name="{{comp.name}}"
                           {% if custom_value %}
                             value="{{custom_value}}"
+                            data-original="{{custom_value}}"
+                          {% else %}
+                            data-original=""
                           {% endif %}
       class="var-edit form-control{%if colour_value%} colour-value{%endif%}"/>
                         <div class="input-group-addon">
                           <a href="javascript:void(0)" class="copy-default"
-                              title="set to default">
+                              title="paste default value">
                             <span class="glyphicon glyphicon-tag"></span>
                           </a>
+                        </div>
+                        <div class="input-group-addon">
+                          <span class="glyphicon glyphicon-star"></span>
                         </div>
                       </div>
                     </div>
@@ -155,26 +168,38 @@ body {
 // -------------------------------------------------------------
 
 // --- Globals
+var original_sheet_name = "{{sheet.name}}";
 var sheet_data = {
   name:"{{sheet.name}}",
   version:{{sheet.version.id}},
 };
 
+
 // --- Methods
-function section_has_edits(section) {
+function section_has_customizations(section) {
+  var has_custom = false;
   var has_edits = false;
   section.find('.var-edit').each(function() {
     if( $(this).val().length != 0 ) {
+      has_custom = true;
+    }
+    if( $(this).hasClass('was-edited') ) {
       has_edits = true;
-      return false;    // escape the each()
     }
   });
 
-  if( has_edits ) {
-    section.find('.has-edits').show();
+  if( has_custom ) {
+    section.find('.has-custom').show();
   }
   else {
-    section.find('.has-edits').hide();
+    section.find('.has-custom').hide();
+  }
+  if( has_edits ) {
+    section.find('.panel-title').find('.edit-flag')
+      .css('visibility', 'visible');
+  }
+  else {
+    section.find('.panel-title').find('.edit-flag').css('visibility', 'hidden');
   }
 }
 
@@ -203,8 +228,17 @@ function ajax_update_colour(field) {
     data:{'payload':JSON.stringify(payload)},
     success:function(response) {
       if( response['success'] ) {
-        swatch.html('');
-        swatch.css('background-color', response['colour']);
+        // update all the swatches returned, should be the value changed as
+        // well as any dependencies
+        for(var key in response['colours']) {
+          if( response['colours'].hasOwnProperty(key) ) {
+            // find the swatch for this named property and update it
+            swatch = $('#comp-' + key).closest('form').find('.colour-swatch');
+
+            swatch.html('');
+            swatch.css('background-color', response['colours'][key]);
+          }
+        }
       }
       else {
         swatch.css('color', 'red');
@@ -218,25 +252,61 @@ function ajax_update_colour(field) {
   });
 }
 
+
+function update_save_button() {
+  var value = true;
+  if( $('input.was-edited').length > 0 ) {
+    value = false;
+  }
+
+  $('#save').prop('disabled', value);
+}
+
+
 // --- On Startup
 $(function() {
   // Populate Data
   $('.section-panel').each(function() {
-    section_has_edits($(this));
+    section_has_customizations($(this));
   });
 
   // Event Handers
   $('#sheet-name').on('input propertychange paste', function() {
-    // input has changed, update the filename display
     var val = $(this).val();
     sheet_data['name'] = val;
+    if( val == original_sheet_name ) {
+      $('#sheet-name').removeClass('was-edited');
+      $('label[for="sheet-name"]').find('.edit-flag')
+        .css('visibility', 'hidden');
+    }
+    else {
+      $('#sheet-name').addClass('was-edited');
+      $('label[for="sheet-name"]').find('.edit-flag')
+        .css('visibility', 'visible');
+    }
+    update_save_button();
+
+    // input has changed, update the filename display
     val = URLify(val) + '.css';
     $('#sheet-filename').html(val);
   });
 
   $('.var-edit').on('input propertychange paste', function() {
-    // input has changed, update our section header
-    section_has_edits($(this).closest('.section-panel'));
+    // check if the change resets us to the original
+    var label_query = 'label[for="' + $(this).attr('id') + '"]';
+
+    if( $(this).val() == $(this).data('original') ) {
+      $(this).removeClass('was-edited');
+      $(label_query).find('.edit-flag').css('visibility', 'hidden');
+    }
+    else {
+      $(this).addClass('was-edited');
+      $(label_query).find('.edit-flag').css('visibility', 'visible');
+    }
+
+    // input has changed, update our section header and the save button
+    section_has_customizations($(this).closest('.section-panel'));
+    update_save_button();
   });
 
   $('.var-edit.colour-value').on('change', function() {
@@ -251,16 +321,16 @@ $(function() {
   $('.copy-default').click(function() {
     var input = $(this).parent().parent().children('input');
     input.val(input.attr('placeholder'));
-    section_has_edits($(this).closest('.section-panel'));
+    input.trigger('paste');
   });
 
   $('#save').click(function() {
     var payload = $.extend({}, sheet_data);
-    payload['overrides'] = {};
+    payload['custom'] = {};
     $('.var-edit').each(function() {
       var value = $(this).val();
       if( value ) {
-        payload['overrides'][$(this).data('name')] = value;
+        payload['custom'][$(this).data('name')] = value;
       }
     });
 
@@ -278,10 +348,19 @@ $(function() {
   });
 
   $('#preview').click(function() {
+    var payload = $.extend({}, sheet_data);
+    payload['overrides'] = {};
+    $('.var-edit').each(function() {
+      var value = $(this).val();
+      if( value ) {
+        payload['overrides'][$(this).data('name')] = value;
+      }
+    });
+
     $.ajax({
       type:'POST',
       url:'{{ajax_save_preview}}',
-      data:{'payload':JSON.stringify(sheet_data)},
+      data:{'payload':JSON.stringify(payload)},
       success:function(response) {
         if( response['success'] ) {
           window.open(response['preview_url'], '_blank')

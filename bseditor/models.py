@@ -91,8 +91,14 @@ class Sheet(TimeTrackModel):
         import_file_name = os.path.abspath(os.path.join(os.path.dirname(
             __file__), 'static/bseditor/sass', self.version.base_file_name))
 
+        if overrides:
+            # create a new bsv so it includes any overrides
+            bsv = BStrapVars.factory(self.version.store, self.store, overrides)
+        else:
+            bsv = self.get_vars()
+
         src = ['$bootstrap-sass-asset-helper:false;']
-        for name, value in self.get_vars().all_value_pairs():
+        for name, value in bsv.all_value_pairs():
             src.append('$%s:%s;' % (name, value))
 
         src.append('@import "%s";' % import_file_name)

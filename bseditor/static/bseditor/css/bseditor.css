@@ -2,8 +2,18 @@ a:focus {
     outline: none;
 }
 
-.has-edits {
+.has-custom {
     display:hidden;
+}
+.has-custom:hover {
+    cursor: help;
+}
+
+.edit-flag {
+    color:#F11;
+}
+.edit-flag:hover {
+    cursor: help;
 }
 
 .collapser, 

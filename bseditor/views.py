@@ -48,7 +48,7 @@ def ajax_save_sheet(request, sheet_id):
 
     try:
         sheet.name = payload['name']
-        sheet.store = json.dumps(payload['overrides'])
+        sheet.store = json.dumps(payload['custom'])
         sheet.save()
         sheet.deploy()
         messages.success(request, 'Saved & deployed %s' % sheet.filename)
@@ -77,11 +77,21 @@ def ajax_colour_value(request):
     content = json.loads(version.store, object_pairs_hook=OrderedDict)
     data = {
         'success':False,
+        'colours':{},
     }
 
     try:
         bsv = BStrapVars.factory(content, overrides=payload['overrides'])
-        data['colour'] = bsv.colour_values[sass_variable]
+        data['colours'][sass_variable] = bsv.colour_values[sass_variable]
+        
+        # update any other colours dependent on this variable
+        for name in bsv.dependencies(sass_variable):
+            try:
+                data['colours'][name] = bsv.colour_values[name]
+            except KeyError:
+                # variable is used in a non-colour, just ignore it
+                pass
+
         data['success'] = True 
     except (sass.CompileError, KeyError):
         # compilation errors, key errors, all should result in the default
@@ -217,7 +227,7 @@ def ajax_save_preview(request, sheet_id):
         preview = PreviewSheet.objects.create(sheet=sheet)
 
     try:
-        preview.store = json.dumps(payload['overrides'])
+        preview.store = json.dumps(payload.get('overrides', '{}'))
         preview.save()
         preview.content()   # trigger any compilation errors
         data['success'] = True

@@ -105,20 +105,27 @@ class BStrapVarsTest(TestCase):
         self.colour_values = OrderedDict()
         dv = DummyVar()
         self.section1 = Section(dv, 'Colors', 'Gray and brand colors')
+
         self.comp1_1 = self.section1.add_component('gray-base', '#000')
         self.all_comps.append(self.comp1_1)
-        self.colour_values[self.comp1_1] = '#000'
+        self.colour_values[self.comp1_1.name] = '#000'
+
         self.comp1_2 = self.section1.add_component('gray-darker', 
             'lighten($gray-base, 13.5%)')
         self.all_comps.append(self.comp1_2)
-        self.colour_values[self.comp1_2] = '#000'
+        self.colour_values[self.comp1_2.name] = '#222222'
+
+        self.comp1_3 = self.section1.add_component('compounded', 
+            'lighten($gray-darker, 13.5%)')
+        self.all_comps.append(self.comp1_3)
+        self.colour_values[self.comp1_3.name] = '#454545'
 
         self.section2 = Section(dv, 'Scaffolding', 
             'Settings for some of the most global styles')
         self.comp2_1 = self.section2.add_component('body-bg', '#fff', 
             'Background color for <body>')
         self.all_comps.append(self.comp2_1)
-        self.colour_values[self.comp2_1] = '#fff'
+        self.colour_values[self.comp2_1.name] = '#fff'
         self.comp2_2 = self.section2.add_component('body-font', 'arial')
         self.all_comps.append(self.comp2_2)
 
@@ -128,7 +135,7 @@ class BStrapVarsTest(TestCase):
 
         self.compN_1 = Component('thing', '#333', 'some thing')
         self.all_comps.append(self.compN_1)
-        self.colour_values[self.compN_1] = '#333'
+        self.colour_values[self.compN_1.name] = '#333'
         self.compN_2 = Component('other', 'not a colour')
         self.all_comps.append(self.compN_2)
         self.compN_3 = Component('place', 'Egypt')
@@ -170,9 +177,18 @@ class BStrapVarsTest(TestCase):
         self.assertEqual(result, expected)
 
         # check colour values
-        expected = ['#000', '#222222', '#fff', '#333']
+        expected = list(self.colour_values.values())
         result = list(bsv.colour_values.values())
         self.assertEqual(result, expected)
+
+        # -- test dependencies
+        expected = set([self.comp1_2.name, self.comp1_3.name])
+        result = bsv.dependencies(self.comp1_1.name)
+        self.assertEqual(result, expected)
+
+        # check something without dependencies
+        result = bsv.dependencies(self.comp2_1.name)
+        self.assertEqual(result, set([]))
 
     def test_custom_and_overrides(self):
         c = {
@@ -186,9 +202,9 @@ class BStrapVarsTest(TestCase):
 
         expected = [(comp.name, comp.value) for comp in self.all_comps]
         expected[0] = (self.comp1_1.name, '#AAA')
-        expected[2] = (self.comp2_1.name, '#BBB')
-        expected[5] = (self.compN_2.name, 'one')
-        expected[6] = (self.compN_3.name, 'two')
+        expected[3] = (self.comp2_1.name, '#BBB')
+        expected[6] = (self.compN_2.name, 'one')
+        expected[7] = (self.compN_3.name, 'two')
         result = list(bsv.all_value_pairs())
         self.assertEqual(result, expected)
 
@@ -205,8 +221,8 @@ class BStrapVarsTest(TestCase):
         }
 
         expected[0] = (self.comp1_1.name, '#CCC')
-        expected[2] = (self.comp2_1.name, '#fff')
-        expected[5] = (self.compN_2.name, 'three')
+        expected[3] = (self.comp2_1.name, '#fff')
+        expected[6] = (self.compN_2.name, 'three')
 
         bsv = BStrapVars.factory(self.data, c, o)
         result = list(bsv.all_value_pairs())

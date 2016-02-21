@@ -316,6 +316,39 @@ class BStrapVars(object):
         for comp in self.all_components.values():
             yield (comp.name, self.get_value(comp.name))
 
+    def dependencies(self, name):
+        """Returns a set of the names of any components that are dependent on
+        the given component including cascaded dependencies.  Note that
+        values are determined through :func:`BStrapVars.get_value()` so normal
+        rules around custom and overridden values apply.  
+
+        Example:
+
+            $gray-base: #CCC
+            $gray-ligher: lighten($gray-base, 10%)
+            $primary: #0F0
+            $success: darken($gray-lighter, 30%)
+
+            .. code-block:: python
+
+            >>> bsv.dependencies('gray-base')
+            ['gray-lighter', 'success']
+
+        :param name: name of component to check dependencies against
+        """
+        deps = set([])
+        check_against = set([name])
+        for comp_name, value in self.all_value_pairs():
+            new_deps = set([])
+            for check_name in check_against:
+                if ('$' + check_name) in value:
+                    new_deps.add(comp_name)
+                    deps.add(comp_name)
+
+            check_against.update(new_deps)
+
+        return deps
+
     def detect_types(self):
         # uses the sass compiler to create fake CSS classes in order to
         # evaluate the expressions in each value (whether in the component or
