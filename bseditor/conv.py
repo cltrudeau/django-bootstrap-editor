@@ -20,11 +20,11 @@ class Component(object):
         if i > -1:
             value = value[0:i - 1] + value[i + 8:]
 
-        i = value.find(';')
+        i = value.find('//')
         if i > -1:
             value = value[0:i]
 
-        i = value.find('//')
+        i = value.find(';')
         if i > -1:
             value = value[0:i]
 
@@ -269,6 +269,10 @@ class BStrapVars(object):
     def custom_to_json(self):
         """Serializes the custom component pieces to JSON."""
         return json.dumps(self.custom_values)
+
+    def overrides_to_json(self):
+        """Serializes the overridden component to JSON."""
+        return json.dumps(self.override_values)
         
     def add_section(self, name, info=''):
         """Creates a new Section and associates it with this object.

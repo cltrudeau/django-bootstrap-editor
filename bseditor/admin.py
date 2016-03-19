@@ -1,9 +1,7 @@
-import os
 from django.contrib import admin
 from django.core.urlresolvers import reverse
 
 from awl.admintools import make_admin_obj_mixin
-from wrench.utils import When
 
 from .models import Version, Sheet
 
@@ -55,10 +53,10 @@ class SheetAdmin(admin.ModelAdmin, mixin):
     show_actions.allow_tags = True
 
     def show_filedate(self, obj):
-        try:
-            last_modified = os.path.getmtime(obj.full_filename)
-            return When(epoch=last_modified).datetime
-        except FileNotFoundError:
+        when = obj.last_deploy
+        if not when:
             return '<i>no file</i>'
+
+        return when
     show_filedate.short_description = 'File Changed'
     show_filedate.allow_tags = True

@@ -1,5 +1,5 @@
 Models
 ======
 
-.. automodule:: dform.models
+.. automodule:: bseditor.models
     :members:

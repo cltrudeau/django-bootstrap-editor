@@ -7,24 +7,20 @@ import os
 
 from django.core.management.base import BaseCommand
 
-from bseditor.conv import BStrapVars
 from bseditor.models import Version
 
 versions = (
-    ('3.3.5', 'bseditor/sass/bootstrap-3.3.5/bootstrap/_variables.scss',
-         'bootstrap-3.3.5/custom.sass', ),
+    ('3.3.5', 'static/bseditor/sass/bootstrap-3.3.5/', 
+        'bootstrap/_variables.scss', 'custom.sass', ),
 )
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         global versions
+        base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
         for version in versions:
-            filename = os.path.abspath(os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                'static', version[1]))
-
-            bsv = BStrapVars.factory_from_sass_file(filename)
-            Version.objects.create(name=version[0], base_file_name=version[2],
-                store=bsv.base_to_json())
+            vars_filename = os.path.join(base_dir, version[1], version[2])
+            compile_filename = os.path.join(base_dir, version[1], version[3])
+            Version.factory(version[0], vars_filename, compile_filename)
             print('Created Version=%s' % version[0])

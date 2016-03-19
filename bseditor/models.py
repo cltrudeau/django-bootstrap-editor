@@ -25,10 +25,39 @@ class Version(TimeTrackModel):
     BootStrap that the compiles CSS will be based upon.   Use the 
     ``./manage.py defaultversion`` command to instantiate the built-in
     version.
+
+    :param name: human readable name for this instance
+    :param compile_filename: fully qualified path to the file to base the
+        compilation of the SASS file on.  When building a css file, the custom
+        variables are joined together, the contents of this file are put on
+        the end and the result is sent to the SASS compiler
+    :param variables_filename: fully qualified path to a file to parse to 
+        construct the base set of variables that can be customized.  This
+        normally points to one of Bootstrap's _variables.scss files.
     """
     name = models.CharField(max_length=50, unique=True)
-    base_file_name = models.CharField(max_length=80)
-    store = models.TextField()
+    compile_filename = models.TextField()
+    variables_filename = models.TextField()
+    _store = models.TextField()
+
+    @classmethod
+    def factory(cls, name, variables_filename, compile_filename):
+        variables_filename = os.path.abspath(variables_filename)
+        compile_filename = os.path.abspath(compile_filename)
+
+        # validate compile_filename
+        src = [
+            '$bootstrap-sass-asset-helper:false;',
+            '@import "%s";' % compile_filename,
+        ]
+        sass.compile(string='\n'.join(src))
+
+        # get JSON version of variables file to store using BSV
+        bsv = BStrapVars.factory_from_sass_file(variables_filename)
+
+        v = Version.objects.create(name=name, compile_filename=compile_filename,
+            variables_filename=variables_filename, _store=bsv.base_to_json())
+        return v
 
     def __str__(self):
         return 'Version(id=%s, name=%s)' % (self.id, self.name)
@@ -37,16 +66,28 @@ class Version(TimeTrackModel):
         """Returns a BStrapVars object populated with content stored in this 
         instance.
         """
-        return BStrapVars.factory(self.store)
+        return BStrapVars.factory(self._store)
 
 
 @python_2_unicode_compatible
 class Sheet(TimeTrackModel):
     """Stores the overridden variables for a specific generated style sheet.
+
+    :param name: human readable name for this customizable style sheet
+    :param version: :class:`Version` object this `Sheet` is based upon
     """
     name = models.CharField(max_length=50, unique=True)
     version = models.ForeignKey(Version)
-    store = models.TextField(blank=True)
+    _store = models.TextField(blank=True)
+
+    @classmethod
+    def factory(cls, name, version, custom=None):
+        if not custom:
+            custom = {}
+
+        bsv = BStrapVars.factory(version._store, custom=custom)
+        return Sheet.objects.create(name=name, version=version, 
+            _store=bsv.custom_to_json())
 
     def __str__(self):
         return 'Sheet(id=%s version.id=%s)' % (self.id, self.version.id)
@@ -56,10 +97,10 @@ class Sheet(TimeTrackModel):
         its corresponding :class:`Version`.
         """
         kwargs = {
-            'base':self.version.store,
+            'base':self.version._store,
         }
-        if self.store:
-            kwargs['custom'] = self.store
+        if self._store:
+            kwargs['custom'] = self._store
         if overrides:
             kwargs['overrides'] = overrides
 
@@ -70,41 +111,31 @@ class Sheet(TimeTrackModel):
         return '%s.css' % slugify(self.name)
 
     @property
-    def preview_filename(self):
-        return '%s.preview.css' % slugify(self.name)
-
-    @property
     def full_filename(self):
         return os.path.abspath(os.path.join(settings.BSEDITOR_DEPLOY_DIR, 
             self.filename))
 
-    def out_of_date(self):
+    @property
+    def last_deploy(self):
         try:
             last_modified = os.path.getmtime(self.full_filename)
+            return When(epoch=last_modified).datetime
         except FileNotFoundError:
-            return True
-
-        last_updated = When(datetime=self.updated).epoch
-        return last_modified < last_updated
+            return None
 
     def compiled_string(self, overrides=None):
-        import_file_name = os.path.abspath(os.path.join(os.path.dirname(
-            __file__), 'static/bseditor/sass', self.version.base_file_name))
-
-        if overrides:
-            # create a new bsv so it includes any overrides
-            bsv = BStrapVars.factory(self.version.store, self.store, overrides)
-        else:
-            bsv = self.get_vars()
+        bsv = self.get_vars(overrides)
 
         src = ['$bootstrap-sass-asset-helper:false;']
         for name, value in bsv.all_value_pairs():
             src.append('$%s:%s;' % (name, value))
 
-        src.append('@import "%s";' % import_file_name)
+        src.append('@import "%s";' % self.version.compile_filename)
 
         if getattr(settings, 'BSEDITOR_TRACK_LAST_COMPILE', False):
-            with open('last_compile.txt', 'w') as f:
+            filename = os.path.abspath(os.path.join(
+                settings.BSEDITOR_DEPLOY_DIR, "last_compile.txt"))
+            with open(filename, 'w') as f:
                 f.write('\n'.join(src))
 
         return sass.compile(string='\n'.join(src))
@@ -131,16 +162,25 @@ class Sheet(TimeTrackModel):
 class PreviewSheet(TimeTrackModel):
     """Stores values for a live-edit sheet that have been changed but not
     saved so that they can be previewed.
+
+    :param sheet: :class:`Sheet` object that this `PreviewSheet` is built on
+        top of
     """
     sheet = models.ForeignKey(Sheet)
-    store = models.TextField(blank=True)
+    _store = models.TextField(blank=True)
+
+    @classmethod
+    def factory(cls, sheet, overrides):
+        bsv = BStrapVars.factory(sheet.version._store, overrides=overrides)
+        return PreviewSheet.objects.create(sheet=sheet, 
+            _store=bsv.overrides_to_json())
 
     def __str__(self):
         return 'PreviewSheet(id=%s sheet.id=%s)' % (self.id, self.sheet.id)
 
     def content(self):
         overrides = None
-        if self.store:
-            overrides = self.store
+        if self._store:
+            overrides = self._store
 
         return self.sheet.compiled_string(overrides)

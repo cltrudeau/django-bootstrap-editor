@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Django Bootstrap Editor'
-copyright = '2015, Christopher Trudeau'
+copyright = '2015-2016, Christopher Trudeau'
 author = 'Christopher Trudeau'
 
 # The version info for the project you're documenting, acts as replacement for
