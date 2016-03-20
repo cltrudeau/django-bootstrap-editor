@@ -31,8 +31,8 @@ SETUP_ARGS = dict(
     test_suite="load_tests.get_suite",
     install_requires=[
         'Django>=1.8',
-        'django-awl>=0.10.2',
-        'wrench>=0.7',
+        'django-awl>=0.11.1',
+        'wrench>=0.8',
         'six>=1.10.0',
     ],
 #    tests_require=[

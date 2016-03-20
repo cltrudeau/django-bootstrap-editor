@@ -1,5 +1,4 @@
 import json, logging, sass
-from collections import OrderedDict
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -13,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from awl.decorators import post_required
 from awl.utils import render_page
 
-from .conv import BStrapVars
+from .conv import BStrapVars, ordered_json
 from .models import Sheet, Version, PreviewSheet
 
 logger = logging.getLogger(__name__)
@@ -45,11 +44,11 @@ def edit_sheet(request, sheet_id):
 def ajax_save_sheet(request, sheet_id):
     sheet = get_object_or_404(Sheet, id=sheet_id)
 
-    payload = json.loads(request.POST['payload'])
+    payload = ordered_json(request.POST['payload'])
 
     try:
         sheet.name = payload['name']
-        sheet.store = json.dumps(payload['custom'])
+        sheet._store = json.dumps(payload['custom'])
         sheet.save()
         sheet.deploy()
         messages.success(request, 'Saved & deployed %s' % sheet.filename)
@@ -72,10 +71,10 @@ def ajax_colour_value(request):
     there.  If the colour value is convertible then another key "colour" will
     contain the result.
     """
-    payload = json.loads(request.POST['payload'])
+    payload = ordered_json(request.POST['payload'])
     sass_variable = payload['sass_variable']
     version = get_object_or_404(Version, id=payload['version'])
-    content = json.loads(version.store, object_pairs_hook=OrderedDict)
+    content = ordered_json(version._store)
     data = {
         'success':False,
         'colours':{},
@@ -163,7 +162,7 @@ def create_sheet(request, version_id):
 # ============================================================================
 
 def preview_css(request, preview_sheet_id):
-    """Returns a CSS based on the compiled SASS content of the given
+    """Returns CSS based on the compiled SASS content of the given
     :class:`PreviewSheet` object
 
     @param preview_sheet_id: ID of :class:`PreviewSheet` object
@@ -198,7 +197,7 @@ def show_saved_sheet_preview(request, sheet_id):
     sheet = get_object_or_404(Sheet, id=sheet_id)
     try:
         preview = PreviewSheet.objects.get(sheet=sheet)
-        preview.store = ''
+        preview._store = ''
         preview.save()
     except PreviewSheet.DoesNotExist:
         preview = PreviewSheet.objects.create(sheet=sheet)
@@ -220,7 +219,7 @@ def ajax_save_preview(request, sheet_id):
         :class:`PreviewSheet` with
     """
     sheet = get_object_or_404(Sheet, id=sheet_id)
-    payload = json.loads(request.POST['payload'])
+    payload = ordered_json(request.POST['payload'])
     data = {
         'success':False,
     }
@@ -231,7 +230,7 @@ def ajax_save_preview(request, sheet_id):
         preview = PreviewSheet.objects.create(sheet=sheet)
 
     try:
-        preview.store = json.dumps(payload.get('overrides', '{}'))
+        preview._store = json.dumps(payload.get('overrides', '{}'))
         preview.save()
         preview.content()   # trigger any compilation errors
         data['success'] = True

@@ -6,6 +6,11 @@ from six import string_types
 from awl.css_colours import is_colour
 
 # ============================================================================
+
+def ordered_json(content):
+    return json.loads(content, object_pairs_hook=OrderedDict)
+
+# ============================================================================
 # Container Classes
 # ============================================================================
 
@@ -169,7 +174,7 @@ class BStrapVars(object):
 
         # handle both JSON strings and dictionaries
         if isinstance(base, string_types):
-            base = json.loads(base, object_pairs_hook=OrderedDict)
+            base = ordered_json(base)
 
         sections = base.get('sections', {})
         for name, section_enc in sections.items():
@@ -186,10 +191,10 @@ class BStrapVars(object):
             bstrap_vars.add_component(name, comp['value'], info)
 
         if isinstance(custom, string_types):
-            custom = json.loads(custom, object_pairs_hook=OrderedDict)
+            custom = ordered_json(custom)
 
         if isinstance(overrides, string_types):
-            overrides = json.loads(overrides, object_pairs_hook=OrderedDict)
+            overrides = ordered_json(overrides)
 
         if custom:
             bstrap_vars.custom_values = custom

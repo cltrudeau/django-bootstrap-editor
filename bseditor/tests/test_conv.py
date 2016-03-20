@@ -191,18 +191,17 @@ class BStrapVarsTest(TestCase):
 
     def test_module_main(self):
         # write VARS_FILE into a file that gets cleaned up 
-        with capture_stdout():
-            with temp_file() as filename:
-                f = open(filename, 'w')
-                f.write(VARS_FILE)
-                f.close()
+        with capture_stdout(), temp_file() as filename:
+            f = open(filename, 'w')
+            f.write(VARS_FILE)
+            f.close()
 
-                import sys
-                keep = sys.argv
-                try:
-                    sys.argv[1] = filename
-                except IndexError:
-                    sys.argv.append(filename)
+            import sys
+            keep = sys.argv
+            try:
+                sys.argv[1] = filename
+            except IndexError:
+                sys.argv.append(filename)
 
-                runpy.run_module('bseditor.conv', run_name='__main__')
-                sys.argv = keep
+            runpy.run_module('bseditor.conv', run_name='__main__')
+            sys.argv = keep
