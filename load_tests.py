@@ -20,9 +20,10 @@ def get_suite(labels=default_labels):
                 'ENGINE':'django.db.backends.sqlite3',
             }
         },
-        #ROOT_URLCONF='bseditor.tests.urls',
+        ROOT_URLCONF='bseditor.tests.urls',
         MIDDLEWARE_CLASSES = (
             'django.contrib.sessions.middleware.SessionMiddleware',
+            'django.contrib.messages.middleware.MessageMiddleware',
             'django.middleware.common.CommonMiddleware',
             'django.middleware.csrf.CsrfViewMiddleware',
             'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -34,6 +35,7 @@ def get_suite(labels=default_labels):
             'django.contrib.sessions',
             'django.contrib.admin',
             'django.contrib.staticfiles',
+            'awl',
             'bseditor',
             'bseditor.tests',
         ),

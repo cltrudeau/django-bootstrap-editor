@@ -43,9 +43,8 @@ class SheetAdmin(admin.ModelAdmin, mixin):
         url = reverse('bseditor-preview-saved', args=(obj.id,))
         actions.append('<a target="_blank" href="%s">Preview</a>' % url)
 
-        if obj.out_of_date():
-            url = reverse('bseditor-deploy-sheet', args=(obj.id,))
-            actions.append('<a href="%s">Deploy</a>' % url)
+        url = reverse('bseditor-deploy-sheet', args=(obj.id,))
+        actions.append('<a href="%s">Deploy</a>' % url)
 
         return ',&nbsp;'.join(actions)
 

@@ -4,6 +4,7 @@ from collections import OrderedDict
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.utils import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -141,7 +142,10 @@ def create_sheet(request, version_id):
             if count:
                 name += ' %s' % count
 
-            sheet = Sheet.objects.create(name=name, version=version)
+            # make this atomic to deal with a roll-back issue during unit
+            # testing
+            with transaction.atomic():
+                sheet = Sheet.objects.create(name=name, version=version)
             break
         except IntegrityError: 
             sheet = Sheet.objects.filter(

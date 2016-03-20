@@ -17,7 +17,8 @@ versions = (
 class Command(BaseCommand):
     def handle(self, *args, **options):
         global versions
-        base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        base_dir = os.path.abspath(os.path.dirname(os.path.dirname(
+            os.path.dirname(__file__))))
 
         for version in versions:
             vars_filename = os.path.join(base_dir, version[1], version[2])
