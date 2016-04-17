@@ -120,7 +120,7 @@ class Sheet(TimeTrackModel):
         try:
             last_modified = os.path.getmtime(self.full_filename)
             return When(epoch=last_modified).datetime
-        except FileNotFoundError:
+        except OSError:
             return None
 
     def compiled_string(self, overrides=None):

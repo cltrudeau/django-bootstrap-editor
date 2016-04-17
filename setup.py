@@ -22,7 +22,7 @@ SETUP_ARGS = dict(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-#        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules',
@@ -32,12 +32,13 @@ SETUP_ARGS = dict(
     install_requires=[
         'Django>=1.8',
         'django-awl>=0.11.1',
+        'libsass==0.8.3',
         'wrench>=0.8',
         'six>=1.10.0',
     ],
-#    tests_require=[
-#        'mock>=1.3.0',
-#    ]
+    tests_require=[
+        'mock>=1.3.0',
+    ]
 )
 
 if __name__ == '__main__':
