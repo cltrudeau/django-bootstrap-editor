@@ -1,30 +1,24 @@
 django-bootstrap-editor
 ***********************
 
-*description*
+BSEditor is used to dynamically generate and store Bootstrap compatible CSS
+files.  Multiple sheets can be created and controlled using a web interface
+based on the Bootstrap template variables.  Once generated several mechanisms
+are provided for deploying the files.  Multiple versions of Bootstrap can be
+supported at the same time.  The ``sheetpath`` template tag allows easy
+inclusion of the generated CSS using the name of the sheet in the database.
 
 Installation
 ============
 
-Add 'dform' to your ``settings.INSTALLED_APPS`` field.
-
-The URLs for DForm are split into two files, the first is for the admin pieces, 
-the second for form submission.  By default the form submission pieces have no
-security or control on them and the correct usage of URLs will result in
-creating and/or editing of any survey.  To fine tune what can be accessed you
-can either use the permissions hook, or not include the submission URLs and
-wrap the given views in your own.  To use the default, include both URL sets
-in your ``urls.py`` file:
+Add 'bseditor' to your ``settings.INSTALLED_APPS`` field and include the urls
+from the library:
 
 .. code-block:: python
 
     urlpatterns += (
-        url(r'dform/', include('dform.urls')),                                      
-        url(r'dform_admin/', include('dform.admin_urls')), 
+        url(r'bseditor/', include('bseditor.urls')),
     )
-
-See the documentation for more information no using the permission hook or
-what views to wrap.
 
 Run:
 
@@ -33,24 +27,14 @@ Run:
     $ manage.py makemigrations
     $ manage.py migrate
 
-
-Demo Installation
-=================
-
-A full django project is included in the repository that is used for testing
-and can give you a quick idea what DForm is about.  The project is available
-in ``extras/sample_site``
+To use the included version of Bootstrap, run:
 
 .. code-block:: bash
 
-    $ cd django-dform
-    $ pip install -r requirements.txt
-    $ cd extras/sample_site
-    $ pip install -r requirements.txt
-    $ ./resetdb.sh
-    $ ./runserver.sh
+    $ manage.py defaultversion
+
 
 Docs
 ====
 
-Docs available at: http://django-dform.readthedocs.org/en/latest/
+Docs available at: http://bseditor.readthedocs.org/en/latest/
