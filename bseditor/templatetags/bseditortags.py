@@ -1,7 +1,7 @@
 # bseditor.templatetags.bseditortags.py
 
 from django import template
-from django.template import Template, Context
+from django.templatetags.static import static
 
 from bseditor.models import Sheet
 
@@ -17,7 +17,4 @@ def sheetpath(sheet_token):
     except ValueError:
         sheet = Sheet.objects.get(name=sheet_token)
 
-    t = '{%% load static %%}{%% static "%s" %%}' % sheet.filename
-    template = Template(t)
-    context = Context({})
-    return template.render(context)
+    return static(sheet.filename)

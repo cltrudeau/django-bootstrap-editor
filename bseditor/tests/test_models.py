@@ -1,6 +1,7 @@
 import os, mock
 
 from django.contrib import messages
+from django.template import Template, Context
 from django.test import override_settings
 from awl.waelsteng import AdminToolsMixin, messages_from_response
 from wrench.utils import parse_link
@@ -119,6 +120,25 @@ class ModelsTest(BSEditorTest, AdminToolsMixin):
                     self.assertTrue(patched.called)
                     self.assertEqual(patched.call_args, (('collectstatic',
                         '--noinput'), ))
+
+            # -- test templatetag
+            t = """
+            {% load bseditortags %}
+            {% sheetpath 's1' %}
+            """
+
+            template = Template(t)
+            result = template.render(Context({})).strip()
+            self.assertEqual('/static/%s' % sheet.filename, result)
+
+            t = """
+            {%% load bseditortags %%}
+            {%% sheetpath %s %%}
+            """ % sheet.id
+
+            template = Template(t)
+            result = template.render(Context({})).strip()
+            self.assertEqual('/static/%s' % sheet.filename, result)
 
             # -- test SheetAdmin
             links = self.field_value(sheet_admin, sheet, 'show_actions')
